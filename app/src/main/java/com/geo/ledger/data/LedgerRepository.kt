@@ -11,12 +11,15 @@ import com.geo.ledger.data.local.activeOptionNameKey
 import com.geo.ledger.domain.LedgerCalculator
 import com.geo.ledger.domain.LedgerEntry
 import com.geo.ledger.domain.LedgerObservation
-import com.geo.ledger.domain.LedgerObserver
+import com.geo.ledger.domain.LedgerObservationPipeline
 import com.geo.ledger.domain.NamedOption
 import com.geo.ledger.domain.OptionNameValidator
 import com.geo.ledger.domain.OptionSnapshotPolicy
 import com.geo.ledger.domain.SaveIdempotency
 import com.geo.ledger.domain.TransactionDraft
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -24,13 +27,17 @@ import kotlinx.coroutines.flow.mapNotNull
 class LedgerRepository(
     private val database: GeoDatabase,
     private val nowMillis: () -> Long = System::currentTimeMillis,
+    computation: CoroutineDispatcher = Dispatchers.Default,
+    sharingScope: CoroutineScope? = null,
 ) {
     private val transactionDao = database.transactionDao()
     private val personDao = database.personOptionDao()
     private val categoryDao = database.expenseCategoryDao()
 
-    val ledgerObservation: Flow<LedgerObservation> = transactionDao.observeAllOrdered().map(
-        LedgerObserver::observe,
+    val ledgerObservation: Flow<LedgerObservation> = LedgerObservationPipeline.observe(
+        rows = transactionDao.observeAllOrdered(),
+        computation = computation,
+        sharingScope = sharingScope,
     )
     val ledgerEntries: Flow<List<LedgerEntry>> = ledgerObservation.mapNotNull { observation ->
         (observation as? LedgerObservation.Ready)?.entries

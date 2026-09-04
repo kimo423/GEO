@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -41,6 +42,7 @@ class HomeViewModelTest {
             kotlinx.coroutines.flow.MutableSharedFlow(),
             today = { LocalDate.of(2026, 9, 3) },
             tickCalendar = false,
+            computation = dispatcher,
         )
         assertFalse(viewModel.uiState.value.isReady)
         assertFalse(viewModel.uiState.value.ledgerError)
@@ -52,7 +54,12 @@ class HomeViewModelTest {
         val today = LocalDate.of(2026, 9, 3)
         val entries = ledgerEntries(ledgerTx(1, "2026-09-01", 12_800, TransactionType.INCOME))
         val flow = MutableStateFlow<LedgerObservation>(LedgerObservation.Ready(entries))
-        val viewModel = HomeViewModel(flow, today = { today }, tickCalendar = false)
+        val viewModel = HomeViewModel(
+            flow,
+            today = { today },
+            tickCalendar = false,
+            computation = dispatcher,
+        )
         val job = launch { viewModel.uiState.collect {} }
         assertEquals(GeoDates.formatDate(today), viewModel.uiState.value.dateLabel)
         assertEquals(12_800L, viewModel.uiState.value.snapshot.currentBalanceCents)
@@ -65,10 +72,37 @@ class HomeViewModelTest {
     fun invalidObservationSetsLedgerErrorWithoutThrowing() = runTest(dispatcher) {
         val today = LocalDate.of(2026, 9, 3)
         val flow = MutableStateFlow<LedgerObservation>(LedgerObservation.Invalid(IllegalStateException("bad")))
-        val viewModel = HomeViewModel(flow, today = { today }, tickCalendar = false)
+        val viewModel = HomeViewModel(
+            flow,
+            today = { today },
+            tickCalendar = false,
+            computation = dispatcher,
+        )
         val job = launch { viewModel.uiState.collect {} }
         assertTrue(viewModel.uiState.value.ledgerError)
         assertEquals(0L, viewModel.uiState.value.snapshot.currentBalanceCents)
+        job.cancel()
+    }
+
+    @Test
+    fun dashboardDerivationWaitsForComputationDispatcher() = runTest {
+        val main = UnconfinedTestDispatcher(testScheduler)
+        val computation = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(main)
+        val today = LocalDate.of(2026, 9, 3)
+        val entries = ledgerEntries(ledgerTx(1, "2026-09-01", 12_800, TransactionType.INCOME))
+        val flow = MutableStateFlow<LedgerObservation>(LedgerObservation.Ready(entries))
+        val viewModel = HomeViewModel(
+            flow,
+            today = { today },
+            tickCalendar = false,
+            computation = computation,
+        )
+        val job = launch(main) { viewModel.uiState.collect {} }
+        assertFalse(viewModel.uiState.value.isReady)
+        testScheduler.runCurrent()
+        assertTrue(viewModel.uiState.value.isReady)
+        assertEquals(12_800L, viewModel.uiState.value.snapshot.currentBalanceCents)
         job.cancel()
     }
 }

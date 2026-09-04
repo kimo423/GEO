@@ -17,11 +17,14 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 
 data class BillsUiState(
     val mode: BillsPeriodMode,
@@ -47,6 +50,7 @@ class BillsViewModel(
     ledgerObservation: Flow<LedgerObservation>,
     private val savedStateHandle: SavedStateHandle,
     today: () -> LocalDate = { LocalDate.now() },
+    private val computation: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     constructor(
         repository: LedgerRepository,
@@ -114,13 +118,17 @@ class BillsViewModel(
                         ledgerError = false,
                     )
                 } else {
+                    val (summary, groups) = withContext(computation) {
+                        LedgerCalculator.summary(observation.entries, range) to
+                            BillsQuery.groups(observation.entries, range)
+                    }
                     BillsUiState(
                         mode = keys.mode,
                         range = range,
                         periodLabel = periodLabel,
                         canShift = keys.mode != BillsPeriodMode.CUSTOM,
-                        summary = LedgerCalculator.summary(observation.entries, range),
-                        groups = BillsQuery.groups(observation.entries, range),
+                        summary = summary,
+                        groups = groups,
                         isReady = true,
                         invalidCustomRange = false,
                         ledgerError = false,

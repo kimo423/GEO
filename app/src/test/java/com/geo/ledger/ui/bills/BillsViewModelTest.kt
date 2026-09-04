@@ -47,6 +47,7 @@ class BillsViewModelTest {
             ledgerObservation = flowOf(LedgerObservation.Ready(emptyList())),
             savedStateHandle = handle,
             today = { LocalDate.of(2026, 9, 3) },
+            computation = dispatcher,
         )
         val job = launch { viewModel.uiState.collect {} }
 
@@ -77,6 +78,7 @@ class BillsViewModelTest {
                 ),
             ),
             today = { LocalDate.of(2026, 9, 3) },
+            computation = dispatcher,
         )
         val job = launch { viewModel.uiState.collect {} }
 
@@ -98,6 +100,7 @@ class BillsViewModelTest {
             ledgerObservation = kotlinx.coroutines.flow.MutableSharedFlow(),
             savedStateHandle = SavedStateHandle(),
             today = { LocalDate.of(2026, 9, 3) },
+            computation = dispatcher,
         )
         assertFalse(viewModel.uiState.value.isReady)
         assertFalse(viewModel.uiState.value.ledgerError)
@@ -116,6 +119,7 @@ class BillsViewModelTest {
             ledgerObservation = flowOf(LedgerObservation.Ready(entries)),
             savedStateHandle = SavedStateHandle(),
             today = { LocalDate.of(2026, 9, 3) },
+            computation = dispatcher,
         )
         val job = launch { viewModel.uiState.collect {} }
         val state = viewModel.uiState.value
@@ -134,6 +138,7 @@ class BillsViewModelTest {
             ledgerObservation = MutableStateFlow(LedgerObservation.Ready(emptyList())),
             savedStateHandle = SavedStateHandle(),
             today = { LocalDate.of(2026, 1, 31) },
+            computation = dispatcher,
         )
         val job = launch { viewModel.uiState.collect {} }
 

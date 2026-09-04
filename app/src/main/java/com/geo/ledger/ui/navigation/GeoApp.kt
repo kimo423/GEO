@@ -1,8 +1,6 @@
 package com.geo.ledger.ui.navigation
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -39,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -272,11 +271,12 @@ private fun GeoNavHost(
     NavHost(
         navController = navController,
         startDestination = GeoDestinations.Home,
-        modifier = modifier,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None },
+        modifier = modifier.clipToBounds(),
+        enterTransition = GeoNavTransitions.enterTransition(),
+        exitTransition = GeoNavTransitions.exitTransition(),
+        popEnterTransition = GeoNavTransitions.popEnterTransition(),
+        popExitTransition = GeoNavTransitions.popExitTransition(),
+        sizeTransform = GeoNavTransitions.sizeTransform(),
     ) {
         composable(GeoDestinations.Home) {
             HomeScreen(

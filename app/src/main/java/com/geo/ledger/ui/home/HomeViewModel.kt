@@ -11,6 +11,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class HomeUiState(
     val dateLabel: String,
@@ -32,6 +35,7 @@ class HomeViewModel(
     ledgerObservation: Flow<LedgerObservation>,
     private val today: () -> LocalDate = { LocalDate.now() },
     tickCalendar: Boolean = true,
+    private val computation: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     constructor(
         repository: LedgerRepository,
@@ -44,9 +48,12 @@ class HomeViewModel(
         when (observation) {
             is LedgerObservation.Invalid -> errorState(day)
             is LedgerObservation.Ready -> try {
+                val snapshot = withContext(computation) {
+                    HomeDashboard.from(observation.entries, day)
+                }
                 HomeUiState(
                     dateLabel = GeoDates.formatDate(day),
-                    snapshot = HomeDashboard.from(observation.entries, day),
+                    snapshot = snapshot,
                     isReady = true,
                     ledgerError = false,
                 )
