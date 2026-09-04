@@ -43,17 +43,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.geo.ledger.GeoApplication
 import com.geo.ledger.R
 import com.geo.ledger.data.local.TransactionType
+import com.geo.ledger.domain.NavigationLockPolicy
 import com.geo.ledger.ui.GeoViewModelFactory
 import com.geo.ledger.ui.theme.GeoExpense
 import com.geo.ledger.ui.theme.GeoIncome
 import com.geo.ledger.util.GeoDates
 import com.geo.ledger.util.MoneyFormatter
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Composable
 fun TransactionDetailScreen(
     onEdit: (Long) -> Unit,
-    onDeleted: () -> Unit,
+    onDeleted: (Int) -> Unit,
     onNavigationLock: (Boolean) -> Unit = {},
     viewModel: TransactionDetailViewModel = composeViewModel(
         factory = GeoViewModelFactory(
@@ -65,7 +67,14 @@ fun TransactionDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    val completionConsumed = remember { AtomicBoolean(false) }
     val deleting = uiState.let { it is TransactionDetailUiState.Content && it.isDeleting }
+    fun completeDeleted() {
+        if (!NavigationLockPolicy.allowCompletionBack(completionConsumed.get())) return
+        if (!completionConsumed.compareAndSet(false, true)) return
+        showDeleteConfirm = false
+        onDeleted(R.string.feedback_deleted)
+    }
     BackHandler(enabled = deleting) { }
     DisposableEffect(deleting) {
         onNavigationLock(deleting)
@@ -75,24 +84,25 @@ fun TransactionDetailScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                TransactionDetailEvent.Deleted -> {
-                    showDeleteConfirm = false
-                    onDeleted()
-                }
+                TransactionDetailEvent.Deleted -> completeDeleted()
                 is TransactionDetailEvent.Failed -> {
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes))
                 }
             }
         }
     }
+    LaunchedEffect(uiState) {
+        if (uiState is TransactionDetailUiState.Deleted) {
+            completeDeleted()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState) {
-            TransactionDetailUiState.Loading,
-            TransactionDetailUiState.Deleted,
-            -> {
+            TransactionDetailUiState.Loading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
+            TransactionDetailUiState.Deleted -> { }
             TransactionDetailUiState.NotFound -> {
                 Text(
                     text = stringResource(R.string.transaction_missing),
@@ -188,7 +198,7 @@ private fun ContentBody(
             )
             DetailRow(
                 label = stringResource(R.string.date),
-                value = GeoDates.formatEpochDay(state.epochDay),
+                value = GeoDates.formatRecordedAt(state.epochDay, state.createdAtMillis),
             )
             if (state.type == TransactionType.EXPENSE) {
                 state.personSnapshot?.let { person ->

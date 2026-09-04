@@ -5,6 +5,7 @@ import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -15,6 +16,7 @@ object GeoDates {
     private val yearChinese = DateTimeFormatter.ofPattern("yyyy年", Locale.CHINA)
     private val groupChinese = DateTimeFormatter.ofPattern("M月d日", Locale.CHINA)
     private val compact = DateTimeFormatter.ofPattern("yyyy/MM/dd", Locale.CHINA)
+    private val recordedChinese = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm:ss", Locale.CHINA)
 
     fun day(date: LocalDate): DateRange = DateRange(date, date)
 
@@ -42,6 +44,26 @@ object GeoDates {
 
     fun formatEpochDay(epochDay: Long): String =
         fromEpochDayOrNull(epochDay)?.let(::formatDate).orEmpty()
+
+    /**
+     * Business calendar day from [epochDay] plus the recorded local clock time of [createdAtMillis].
+     * Does not convert the business date into the zone; only the time-of-day is zone-dependent.
+     */
+    fun formatRecordedAt(
+        epochDay: Long,
+        createdAtMillis: Long,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): String {
+        val date = fromEpochDayOrNull(epochDay) ?: return ""
+        val time = try {
+            Instant.ofEpochMilli(createdAtMillis).atZone(zone).toLocalTime()
+        } catch (_: DateTimeException) {
+            return ""
+        } catch (_: ArithmeticException) {
+            return ""
+        }
+        return recordedChinese.format(date.atTime(time))
+    }
 
     // Material date pickers communicate UTC-based day millis. Database persistence remains epochDay.
     fun toPickerMillis(date: LocalDate): Long =

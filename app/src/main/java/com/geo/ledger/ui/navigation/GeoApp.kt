@@ -1,6 +1,8 @@
 package com.geo.ledger.ui.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
@@ -23,17 +25,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -45,6 +52,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.geo.ledger.R
 import com.geo.ledger.domain.EditorNavigationGuard
+import com.geo.ledger.domain.NavigationLockPolicy
 import com.geo.ledger.ui.addtransaction.AddTransactionScreen
 import com.geo.ledger.ui.addtransaction.AddTransactionViewModel
 import com.geo.ledger.ui.bills.BillsScreen
@@ -113,16 +121,33 @@ fun GeoApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in TopLevelRoutes
+    val resources = LocalResources.current
+    val snackbarHostState = remember { SnackbarHostState() }
     var navigationLocked by remember { mutableStateOf(false) }
-    val onBack: () -> Unit = {
-        if (!navigationLocked) navController.popBackStack()
+    var feedbackToken by remember { mutableIntStateOf(0) }
+    var pendingFeedbackRes by remember { mutableStateOf<Int?>(null) }
+    val onUserBack: () -> Unit = {
+        if (NavigationLockPolicy.allowUserBack(navigationLocked)) {
+            navController.popBackStack()
+        }
+    }
+    val onOperationCompleted: (Int) -> Unit = { messageRes ->
+        navController.popBackStack()
+        feedbackToken += 1
+        pendingFeedbackRes = messageRes
     }
     BackHandler(enabled = navigationLocked) { }
+    LaunchedEffect(feedbackToken) {
+        val messageRes = pendingFeedbackRes ?: return@LaunchedEffect
+        if (feedbackToken == 0) return@LaunchedEffect
+        snackbarHostState.showSnackbar(resources.getString(messageRes))
+    }
 
     Box {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             if (!showBottomBar) {
                 TopAppBar(
@@ -131,7 +156,7 @@ fun GeoApp(
                         Text(secondaryTitle(currentRoute, editorId))
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack, enabled = !navigationLocked) {
+                        IconButton(onClick = onUserBack, enabled = !navigationLocked) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back),
@@ -155,7 +180,8 @@ fun GeoApp(
     ) { innerPadding ->
         GeoNavHost(
             navController = navController,
-            onBack = onBack,
+            onUserBack = onUserBack,
+            onOperationCompleted = onOperationCompleted,
             onNavigationLock = { navigationLocked = it },
             modifier = Modifier
                 .fillMaxSize()
@@ -206,7 +232,8 @@ private fun GeoBottomBar(
 @Composable
 private fun GeoNavHost(
     navController: NavHostController,
-    onBack: () -> Unit,
+    onUserBack: () -> Unit,
+    onOperationCompleted: (Int) -> Unit,
     onNavigationLock: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -246,6 +273,10 @@ private fun GeoNavHost(
         navController = navController,
         startDestination = GeoDestinations.Home,
         modifier = modifier,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
     ) {
         composable(GeoDestinations.Home) {
             HomeScreen(
@@ -275,8 +306,8 @@ private fun GeoNavHost(
             ),
         ) {
             AddTransactionScreen(
-                onSaved = onBack,
-                onBack = onBack,
+                onSaved = onOperationCompleted,
+                onBack = onUserBack,
                 onNavigationLock = onNavigationLock,
             )
         }
@@ -291,7 +322,7 @@ private fun GeoNavHost(
         ) {
             TransactionDetailScreen(
                 onEdit = { id -> navigateEditor(id) },
-                onDeleted = onBack,
+                onDeleted = onOperationCompleted,
                 onNavigationLock = onNavigationLock,
             )
         }

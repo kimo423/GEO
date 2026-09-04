@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.geo.ledger.GeoApplication
 import com.geo.ledger.R
 import com.geo.ledger.data.local.TransactionType
+import com.geo.ledger.domain.NavigationLockPolicy
 import com.geo.ledger.ui.GeoViewModelFactory
 import com.geo.ledger.ui.theme.GeoCard
 import com.geo.ledger.ui.theme.GeoExpense
@@ -65,11 +66,12 @@ import com.geo.ledger.util.GeoDates
 import com.geo.ledger.util.MoneyFormatter
 import com.geo.ledger.util.MoneyParser
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddTransactionScreen(
-    onSaved: () -> Unit,
+    onSaved: (Int) -> Unit,
     onBack: () -> Unit,
     onNavigationLock: (Boolean) -> Unit = {},
     viewModel: AddTransactionViewModel = composeViewModel(
@@ -82,6 +84,7 @@ fun AddTransactionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var showDatePicker by remember { mutableStateOf(false) }
+    val completionConsumed = remember { AtomicBoolean(false) }
     BackHandler(enabled = uiState.isSaving) { }
     DisposableEffect(uiState.isSaving) {
         onNavigationLock(uiState.isSaving)
@@ -91,7 +94,13 @@ fun AddTransactionScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                AddTransactionEvent.Saved -> onSaved()
+                is AddTransactionEvent.Saved -> {
+                    if (NavigationLockPolicy.allowCompletionBack(completionConsumed.get()) &&
+                        completionConsumed.compareAndSet(false, true)
+                    ) {
+                        onSaved(event.messageRes)
+                    }
+                }
                 is AddTransactionEvent.Failed -> {
                     snackbarHostState.showSnackbar(resources.getString(event.messageRes))
                     if (event.messageRes == R.string.transaction_missing) onBack()

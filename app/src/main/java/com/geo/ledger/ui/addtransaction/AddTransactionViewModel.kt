@@ -52,7 +52,7 @@ data class AddTransactionUiState(
 )
 
 sealed interface AddTransactionEvent {
-    data object Saved : AddTransactionEvent
+    data class Saved(val messageRes: Int) : AddTransactionEvent
     data class Failed(val messageRes: Int) : AddTransactionEvent
 }
 
@@ -293,7 +293,8 @@ class AddTransactionViewModel(
                     if (savedId > 0) {
                         savedStateHandle[ARG_TRANSACTION_ID] = savedId
                     }
-                    _events.send(AddTransactionEvent.Saved)
+                    val messageRes = if (editId != null) R.string.feedback_saved else R.string.feedback_recorded
+                    _events.send(AddTransactionEvent.Saved(messageRes))
                     success = true
                 } catch (cancelled: CancellationException) {
                     throw cancelled

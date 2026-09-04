@@ -3,8 +3,12 @@ package com.geo.ledger.util
 import com.geo.ledger.domain.BillsPeriodMode
 import com.geo.ledger.domain.BillsQuery
 import com.geo.ledger.domain.DateRange
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -87,6 +91,27 @@ class GeoDatesTest {
         GeoDates.toPickerMillisOrNull(LocalDate.MAX)
         GeoDates.fromPickerMillisOrNull(Long.MAX_VALUE)
         assertEquals(LocalDate.of(2026, 9, 3), GeoDates.fromEpochDayOrNull(LocalDate.of(2026, 9, 3).toEpochDay()))
+        assertEquals("", GeoDates.formatRecordedAt(Long.MAX_VALUE, 1L, ZoneOffset.UTC))
+    }
+
+    @Test
+    fun recordedAtUsesBusinessDateAndZoneLocalTimeWith24HourPadding() {
+        val epochDay = LocalDate.of(2026, 9, 3).toEpochDay()
+        val utc = ZoneOffset.UTC
+        val shanghai = ZoneId.of("Asia/Shanghai")
+
+        val padded = ZonedDateTime.of(2026, 1, 1, 9, 5, 1, 0, utc).toInstant().toEpochMilli()
+        assertEquals("2026年9月3日 09:05:01", GeoDates.formatRecordedAt(epochDay, padded, utc))
+
+        val afternoon = ZonedDateTime.of(2026, 1, 1, 13, 5, 9, 0, utc).toInstant().toEpochMilli()
+        assertEquals("2026年9月3日 13:05:09", GeoDates.formatRecordedAt(epochDay, afternoon, utc))
+
+        val midnight = ZonedDateTime.of(2026, 9, 4, 0, 0, 0, 0, utc).toInstant().toEpochMilli()
+        assertEquals("2026年9月3日 00:00:00", GeoDates.formatRecordedAt(epochDay, midnight, utc))
+
+        val utcAfternoon = Instant.parse("2026-09-03T16:00:00Z").toEpochMilli()
+        assertEquals("2026年9月3日 16:00:00", GeoDates.formatRecordedAt(epochDay, utcAfternoon, utc))
+        assertEquals("2026年9月3日 00:00:00", GeoDates.formatRecordedAt(epochDay, utcAfternoon, shanghai))
     }
 
     @Test

@@ -93,6 +93,9 @@
     <string name="error_text_too_long">内容过长</string>
     <string name="error_overflow">金额过大，无法保存</string>
     <string name="error_save_failed">保存失败，请检查输入</string>
+    <string name="feedback_recorded">已记入</string>
+    <string name="feedback_saved">已保存</string>
+    <string name="feedback_deleted">已删除</string>
     <string name="error_invalid_range">开始日期不能晚于结束日期</string>
     <string name="error_ledger_corrupt">账本数据异常，无法显示</string>
     <string name="error_amount_invalid">金额无效或过大</string>

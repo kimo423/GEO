@@ -1,6 +1,6 @@
 {
-  "versionCode": 3,
-  "versionName": "1.1.1",
-  "releaseNotes": "更新功能测试版本：用于验证启动更新提示与 GitHub APK 下载跳转；账本数据与现有功能保持兼容。",
+  "versionCode": 4,
+  "versionName": "1.1.2",
+  "releaseNotes": "修复页面切换叠屏与卡顿、记账后无反馈/不退出、删除后持续加载；收支记录时间新增24小时制时分秒。",
   "apkUrl": "https://github.com/kimo423/GEO/releases/latest/download/GEO.apk"
 }

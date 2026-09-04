@@ -24,9 +24,19 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class TransactionDetailViewModel(
-    private val repository: LedgerRepository,
     savedStateHandle: SavedStateHandle,
+    private val observeTransaction: (Long) -> Flow<LedgerEntry?>,
+    private val deleteTransaction: suspend (Long) -> Unit,
 ) : ViewModel() {
+    constructor(
+        repository: LedgerRepository,
+        savedStateHandle: SavedStateHandle,
+    ) : this(
+        savedStateHandle = savedStateHandle,
+        observeTransaction = repository::observeTransaction,
+        deleteTransaction = repository::deleteTransaction,
+    )
+
     private val transactionId: Long = savedStateHandle.get<Long>(ARG_TRANSACTION_ID) ?: INVALID_ID
     private val deleteMutex = Mutex()
     private val deleteInFlight = AtomicBoolean(false)
@@ -75,8 +85,9 @@ class TransactionDetailViewModel(
                 try {
                     _errorRes.value = null
                     _isDeleting.value = true
-                    repository.deleteTransaction(transactionId)
+                    deleteTransaction(transactionId)
                     _deleted.value = true
+                    _isDeleting.value = false
                     eventsChannel.send(TransactionDetailEvent.Deleted)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -95,7 +106,7 @@ class TransactionDetailViewModel(
         if (transactionId <= 0L) {
             return flowOf(ObservedTransaction(entry = null, loaded = true))
         }
-        return repository.observeTransaction(transactionId)
+        return observeTransaction(transactionId)
             .map { entry -> ObservedTransaction(entry = entry, loaded = true) }
             .onStart { emit(ObservedTransaction(entry = null, loaded = false)) }
     }

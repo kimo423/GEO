@@ -92,6 +92,7 @@ class TransactionDetailUiMapperTest {
         assertTrue(content.isDeleting)
         assertEquals(R.string.error_delete_failed, content.errorRes)
         assertEquals(-12_800L, content.balanceAfterCents)
+        assertEquals(1L, content.createdAtMillis)
     }
 
     @Test

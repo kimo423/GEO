@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import com.geo.ledger.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -141,6 +142,89 @@ class AddTransactionViewModelTest {
         assertEquals(LedgerRepository.MAX_NOTE_LENGTH, viewModel.uiState.value.note.length)
         job.cancel()
     }
+
+    @Test
+    fun saveSuccessEmitsSingleRecordedEventAndBlocksResubmit() = runTest(dispatcher) {
+        val saves = AtomicInteger(0)
+        val viewModel = editorViewModel { _, _, _ ->
+            saves.incrementAndGet()
+            44L
+        }
+        val events = mutableListOf<AddTransactionEvent>()
+        val job = launch {
+            launch { viewModel.uiState.collect {} }
+            launch { viewModel.events.collect { events.add(it) } }
+        }
+        viewModel.onAmountChange("1.00")
+        viewModel.save()
+        assertEquals(listOf(AddTransactionEvent.Saved(R.string.feedback_recorded)), events)
+        assertFalse(viewModel.uiState.value.isSaving)
+        viewModel.save()
+        assertEquals(1, saves.get())
+        assertEquals(1, events.size)
+        job.cancel()
+    }
+
+    @Test
+    fun editSaveSuccessEmitsSavedAndFailureStaysForRetry() = runTest(dispatcher) {
+        val viewModel = editorViewModel(
+            transactionId = 9L,
+        ) { _, _, _ -> error("db") }
+        val events = mutableListOf<AddTransactionEvent>()
+        val job = launch {
+            launch { viewModel.uiState.collect {} }
+            launch { viewModel.events.collect { events.add(it) } }
+        }
+        viewModel.onAmountChange("2.00")
+        viewModel.save()
+        assertEquals(1, events.size)
+        assertTrue(events.single() is AddTransactionEvent.Failed)
+        assertFalse(viewModel.uiState.value.isSaving)
+        val retry = AddTransactionViewModel(
+            savedStateHandle = SavedStateHandle(
+                mapOf(
+                    AddTransactionViewModel.ARG_TRANSACTION_ID to 9L,
+                    "editor_loaded" to true,
+                    "editor_amount" to "2.00",
+                    "editor_type" to TransactionType.EXPENSE.name,
+                    "editor_epoch_day" to LocalDate.of(2026, 9, 3).toEpochDay(),
+                ),
+            ),
+            activePersonsFlow = MutableStateFlow(emptyList()),
+            activeCategoriesFlow = MutableStateFlow(emptyList()),
+            getTransaction = { null },
+            saveTransaction = { _, _, _ -> 9L },
+            today = { LocalDate.of(2026, 9, 3) },
+        )
+        val retryEvents = mutableListOf<AddTransactionEvent>()
+        val retryJob = launch {
+            launch { retry.uiState.collect {} }
+            launch { retry.events.collect { retryEvents.add(it) } }
+        }
+        retry.save()
+        assertEquals(listOf(AddTransactionEvent.Saved(R.string.feedback_saved)), retryEvents)
+        retryJob.cancel()
+        job.cancel()
+    }
+
+    private fun editorViewModel(
+        transactionId: Long = AddTransactionViewModel.NEW_TRANSACTION_ID,
+        saveTransaction: suspend (Long?, TransactionDraft, String?) -> Long,
+    ) = AddTransactionViewModel(
+        savedStateHandle = SavedStateHandle(
+            mapOf(
+                AddTransactionViewModel.ARG_TRANSACTION_ID to transactionId,
+                "editor_loaded" to true,
+                "editor_type" to TransactionType.EXPENSE.name,
+                "editor_epoch_day" to LocalDate.of(2026, 9, 3).toEpochDay(),
+            ),
+        ),
+        activePersonsFlow = MutableStateFlow(emptyList()),
+        activeCategoriesFlow = MutableStateFlow(emptyList()),
+        getTransaction = { null },
+        saveTransaction = saveTransaction,
+        today = { LocalDate.of(2026, 9, 3) },
+    )
 
     private fun person(id: Long, name: String) = PersonOptionEntity(
         id = id,

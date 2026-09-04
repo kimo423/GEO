@@ -346,7 +346,10 @@ private fun BillsTransactionRow(
         expenseFallback = expenseFallback,
         incomeFallback = incomeFallback,
     )
-    val details = transactionFieldLine(transaction)
+    val recordedAt = GeoDates.formatRecordedAt(transaction.transactionDate, transaction.createdAtMillis)
+    val details = listOfNotNull(recordedAt.takeIf { it.isNotEmpty() }, transactionFieldLine(transaction))
+        .joinToString(" · ")
+        .ifEmpty { null }
     val amountColor = when (transaction.type) {
         TransactionType.INCOME -> GeoIncome
         TransactionType.EXPENSE -> GeoExpense

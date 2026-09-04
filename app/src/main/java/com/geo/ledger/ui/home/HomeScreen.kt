@@ -217,7 +217,7 @@ private fun RecentTransactionRow(
         categorySnapshot = transaction.expenseCategorySnapshot,
         note = transaction.note,
     )
-    val dateLabel = GeoDates.formatEpochDay(transaction.transactionDate)
+    val dateLabel = GeoDates.formatRecordedAt(transaction.transactionDate, transaction.createdAtMillis)
     val amountColor = when (transaction.type) {
         TransactionType.INCOME -> GeoIncome
         TransactionType.EXPENSE -> GeoExpense
