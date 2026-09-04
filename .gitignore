@@ -1,0 +1,69 @@
+# Gradle
+.gradle/
+.gradle-user-home/
+.kotlin/
+build/
+**/build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+
+# Local SDK / signing
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Delivery / dist / logs
+dist/
+.delivery-stage/
+docs/logs/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Binary packages (defense in depth)
+*.apk
+*.aab
+*.ap_
+*.zip
+*.ipa
+*.dex
+*.aar
+
+# Secrets / credentials
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+secrets.*
+credentials.*
+*.token
+id_rsa
+id_rsa.pub
+*.secret
+
+# System / editor temp
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+*~
+*.swp
+*.swo
+*.tmp
+*.temp
+*.log
+*.orig
+*.bak
+*.class
+
+# Keep Gradle Wrapper JAR
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

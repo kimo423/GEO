@@ -1,0 +1,6 @@
+{
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "releaseNotes": "支持从 GitHub 检测更新；启动时仅在有新版本时提示。账本数据、备份关闭与权限策略不变。",
+  "apkUrl": "https://github.com/kimo423/GEO/releases/latest/download/GEO.apk"
+}

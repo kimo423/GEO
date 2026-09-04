@@ -1,0 +1,1 @@
+I'll inspect the GEO project and requirements first, then hunt the data/business layer with concrete counterexamples and write only the round-1 report.I'll read the rest of the requirements and the data/business-layer source next so I can attack real code, not a checklist.I’ll read the data/business-layer sources, tests, and Agent A’s report so the hunt is against real code.
