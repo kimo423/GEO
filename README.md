@@ -2,6 +2,11 @@
 
 Offline personal ledger for Android. Label **GEO**, package `com.geo.ledger`. Records income and expense in **integer cents** (`Long`), never floating-point money.
 
+[Download GEO 1.2.0 APK](https://github.com/kimo423/GEO/releases/download/v1.2.0/GEO.apk)
+· [Release notes](https://github.com/kimo423/GEO/releases/tag/v1.2.0).
+Install over the existing app; do not uninstall or clear storage. Published after
+automated validation with user-authorized deferral of physical-device testing.
+
 ## Features and screens
 
 - **Home:** GEO title, current Chinese date, current balance, this-month income/expense, last 5 bills, empty/error/loading states, 记一笔.
