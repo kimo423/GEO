@@ -35,7 +35,7 @@ class LedgerRepositoryInstrumentedTest {
         database = Room.inMemoryDatabaseBuilder(context, GeoDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repository = LedgerRepository(database) { 1_000L }
+        repository = LedgerRepository(database, nowMillis = { 1_000L })
     }
 
     @After

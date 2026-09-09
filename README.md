@@ -8,8 +8,8 @@ Offline personal ledger for Android. Label **GEO**, package `com.geo.ledger`. Re
 - **Bills:** day / month / year / custom range, grouped running balances. Inverted custom range is rejected (no min/max swap). Loading until first ledger observation.
 - **记一笔 / Edit:** amount, person/category chips (historical + clear + explicit reselect), source, date picker (UTC epochDay), note, save lock.
 - **Detail:** view, edit, delete with confirm.
-- **Settings:** add / rename / soft-delete persons and expense categories.
-- **Update:** on cold start, HTTPS fetch of GitHub `version.json`. Newer `versionCode` shows one dialog (稍后更新 / 立即更新).
+- **Settings:** accounting settings, audit history, configuration/data export and import, version and manual update check.
+- **Update:** ONLY a user tap on “检查更新” requests the existing GitHub repository's latest stable Release. Numeric SemVer comparison; APK asset preferred, Release page fallback. No startup/background check or automatic installation.
 
 ## Architecture
 
@@ -28,9 +28,46 @@ Kotlin, Jetpack Compose, Material 3, Room, Flow, ViewModel.
 | Lifecycle | 2.9.4 |
 | Navigation Compose | 2.9.5 |
 | Coroutines | 1.10.2 |
-| versionName / versionCode | 1.1.0 / 2 |
+| versionName / versionCode | 1.2.0 / 6 |
 
-Database: `geo-ledger.db`, Room **v3**, schema export under `app/schemas/`.
+Database: `geo-ledger.db`, Room **v4**, schema export under `app/schemas/`.
+
+## 1.2 data-safety upgrade
+
+- Each income/expense supports 0–10 attachments. Each <=10 MiB (10,485,760 bytes),
+  combined <=30 MiB (31,457,280 bytes); counted from streamed bytes, not provider metadata.
+- Files are copied into GEO private `filesDir/blobs/` using random internal names.
+  Deleting the original external source does not delete GEO's copy. SAF file selection
+  requires no storage permission. Images have bounded internal previews; PDF/other
+  formats use FileProvider and an installed viewer. Every attachment supports SAF
+  “保存到设备”, including historical attachments.
+- Stable transaction UUIDs; transactions logically delete. Normal balances exclude
+  tombstones. Every real edit stores an immutable before/after event; delete stores
+  before. Removed attachments remain accessible from history. Unchanged saves add
+  no event. History is application audit, not cryptographic tamper-proof evidence.
+- Explicit non-destructive Room migration 1->2->3->4 assigns each old row a unique
+  UUID while preserving IDs, amounts, dates, snapshots and balance ordering. Never
+  uninstall/clear app data as a migration strategy.
+- `.geocfg`: persons/categories. Full replace or same-name-only replacement; the
+  latter ignores unmatched imported options. Historic transaction names stay intact.
+- `.geodata`: ZIP with current/deleted transactions, all audit, actual attachment
+  bytes and SHA-256 manifest. Full dataset restore or same-UUID-only replacement;
+  the latter ignores new imported transactions. Configuration is separate.
+- Validate entire import in staging before confirmation/commit. Reject corrupt
+  hashes, missing files, duplicate/conflicting IDs and dangerous ZIP paths. Single
+  Room commit follows new-file promotion; rollback never overwrites existing blobs.
+- INTERNET is used only for the user's explicit “检查更新” action. No accounts,
+  analytics, ledger upload, broad storage permission or install permission.
+
+See [data format and restore semantics](docs/data_format.md) for exact schema,
+resource limits and compatibility rules. Keep regular exported backups: uninstall
+or system “clear storage” still removes private data. Old unreferenced blobs are
+retained conservatively; automatic garbage collection is not included in 1.2.
+
+On 2026-09-09 the user explicitly authorized publishing 1.2.0 without physical-device
+testing. This waives the device acceptance step; it does not turn unrun device tests
+into passes. See [1.2.0 release notes](docs/release_notes_v1.2.0.md). The legacy
+`version.json` is updated for older installed versions after the Release asset is ready.
 
 ## Open, build, install
 
@@ -67,15 +104,18 @@ Connected tests need a **hardware-accelerated** emulator or device. `Study_Andro
 
 - **1→2:** unique `active_name_key` on option tables; duplicate actives deactivated.
 - **2→3:** `transactions.client_op_key` + unique index (NEW-save idempotency).
+- **3→4:** permanent transaction UUIDs, tombstones, attachment/blob and immutable audit tables.
 - No `fallbackToDestructiveMigration`.
 
-## Tests (this delivery)
+## Validation for 1.2.0
 
-- JVM `testDebugUnitTest`: **81 tests, 0 failures**.
-- `lintDebug`: **0 errors, 10 warnings**.
-- `assembleDebug`: success (`com.geo.ledger` 1.1.0 / versionCode 2).
-- `connectedDebugAndroidTest`: **0 tests run**, failed with `No connected devices!` — **not passed**.
-- GitHub update reviewer A/B: **PASS, zero findings** (`docs/github_update_review.md`, `docs/github_update_bug_hunt.md`). Live fetch/install **unverified**; remote `kimo423/GEO` is empty/unpublished.
+Current final-run evidence is recorded in [build status](docs/build_status.md) and
+[test report](docs/test_report.md). Host tests include real Room under Robolectric,
+migrations from each prior schema, attachment/audit and archive round trips, malicious
+imports, SemVer and Compose smoke checks. Robolectric is **not** a physical-device test.
+No Android device is currently connected; SAF/viewer compatibility, process death,
+on-device updates and frame smoothness remain unverified. Historical 1.1 review
+reports do not approve 1.2; see the explicitly labelled upgrade review reports.
 
 ## Privacy
 

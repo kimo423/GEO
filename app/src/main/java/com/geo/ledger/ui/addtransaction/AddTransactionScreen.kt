@@ -67,6 +67,10 @@ import com.geo.ledger.util.MoneyFormatter
 import com.geo.ledger.util.MoneyParser
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.geo.ledger.ui.attachments.AttachmentList
+import com.geo.ledger.data.transfer.AttachmentRef
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -81,14 +85,23 @@ fun AddTransactionScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val attachments by viewModel.attachments.collectAsStateWithLifecycle()
+    val attachmentBusy by viewModel.attachmentBusy.collectAsStateWithLifecycle()
+    val attachmentLoadFailed by viewModel.attachmentLoadFailed.collectAsStateWithLifecycle()
+    val attachmentMessage by viewModel.attachmentMessage.collectAsStateWithLifecycle()
+    val context=LocalContext.current
+    val pickAttachments=rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { viewModel.addAttachments(context,it) }
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var showDatePicker by remember { mutableStateOf(false) }
     val completionConsumed = remember { AtomicBoolean(false) }
-    BackHandler(enabled = uiState.isSaving) { }
-    DisposableEffect(uiState.isSaving) {
-        onNavigationLock(uiState.isSaving)
+    BackHandler(enabled = uiState.isSaving || attachmentBusy) { }
+    DisposableEffect(uiState.isSaving,attachmentBusy) {
+        onNavigationLock(uiState.isSaving || attachmentBusy)
         onDispose { onNavigationLock(false) }
+    }
+    LaunchedEffect(attachmentMessage) {
+        attachmentMessage?.let { snackbarHostState.showSnackbar(it); viewModel.attachmentMessage.value=null }
     }
 
     LaunchedEffect(viewModel) {
@@ -123,7 +136,7 @@ fun AddTransactionScreen(
                         .weight(1f)
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                        .padding(horizontal = com.geo.ledger.ui.theme.GeoSpacing.Page, vertical = com.geo.ledger.ui.theme.GeoSpacing.Section),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     TypeSelector(
@@ -184,10 +197,17 @@ fun AddTransactionScreen(
                         minLines = 3,
                         maxLines = 6,
                     )
+                    Text("附件（可选） · ${attachments.size}/10",style=MaterialTheme.typography.titleSmall)
+                    Text("${com.geo.ledger.ui.attachments.sizeLabel(attachments.sumOf { it.sizeBytes })} / 30 MiB · 单个最多 10 MiB",style=MaterialTheme.typography.bodySmall)
+                    TextButton(enabled=!attachmentBusy && !uiState.isSaving,onClick={pickAttachments.launch(arrayOf("*/*"))}) { Text("＋ 添加附件") }
+                    if(attachmentBusy) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
+                    if(attachmentLoadFailed) Text("附件加载失败，已禁止保存。请返回后重试。",color=MaterialTheme.colorScheme.error)
+                    AttachmentList(attachments.map(AttachmentRef::from),attachments.associate { it.relation.attachmentUuid to it.internalStorageKey },
+                        enabled=!attachmentBusy && !uiState.isSaving,onRemove=viewModel::removeAttachment)
                 }
                 HorizontalDivider()
                 SaveButton(
-                    state = uiState,
+                    state = uiState.copy(canSave=uiState.canSave && !attachmentBusy && !attachmentLoadFailed),
                     onSave = viewModel::save,
                 )
             }

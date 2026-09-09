@@ -23,8 +23,8 @@ object OptionSnapshotPolicy {
         missingMessage: String,
         inactiveMessage: String,
     ): String? {
-        if (selectedId == null) return null
         if (!selectionEdited && existingId == selectedId) return existingSnapshot
+        if (selectedId == null) return null
         val option = requireNotNull(currentOption) { missingMessage }
         require(option.isActive) { inactiveMessage }
         return option.name
@@ -34,9 +34,13 @@ object OptionSnapshotPolicy {
         active: List<Pair<Long, String>>,
         selectedId: Long?,
         historicalSnapshot: String?,
+        allowDetachedSnapshot: Boolean = false,
     ): List<OptionChipModel> {
         if (selectedId == null) {
-            return active.map { (id, name) ->
+            val imported = historicalSnapshot?.takeIf { allowDetachedSnapshot && it.isNotBlank() }?.let {
+                listOf(OptionChipModel(id = -2, label = it, historical = true, selected = true))
+            }.orEmpty()
+            return imported + active.map { (id, name) ->
                 OptionChipModel(id = id, label = name, historical = false, selected = false)
             }
         }

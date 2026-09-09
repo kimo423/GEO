@@ -132,6 +132,8 @@ class AppUpdateTest {
             validJson(3, "1.2.0")
         }
         val viewModel = AppUpdateViewModel(localVersionCode = 2, fetcher = fetcher, io = dispatcher)
+        assertEquals(0, calls.get())
+        viewModel.checkOnce()
         val job = launch { viewModel.uiState.collect {} }
         assertEquals(1, calls.get())
         assertTrue(viewModel.uiState.value.dialogVisible)
@@ -145,6 +147,8 @@ class AppUpdateTest {
     fun equalOrOlderRemoteStaysSilent() = runTest(dispatcher) {
         val equal = AppUpdateViewModel(2, { validJson(2, "1.1.0") }, dispatcher)
         val older = AppUpdateViewModel(2, { validJson(1, "1.0.0") }, dispatcher)
+        equal.checkOnce()
+        older.checkOnce()
         launch { equal.uiState.collect {} }.cancel()
         launch { older.uiState.collect {} }.cancel()
         assertFalse(equal.uiState.value.dialogVisible)
@@ -158,6 +162,7 @@ class AppUpdateTest {
             fetcher = { error("network") },
             io = dispatcher,
         )
+        viewModel.checkOnce()
         val job = launch { viewModel.uiState.collect {} }
         assertFalse(viewModel.uiState.value.dialogVisible)
         job.cancel()
@@ -166,6 +171,7 @@ class AppUpdateTest {
     @Test
     fun dismissHidesDialogForSession() = runTest(dispatcher) {
         val viewModel = AppUpdateViewModel(2, { validJson(9, "9.0.0") }, dispatcher)
+        viewModel.checkOnce()
         val job = launch { viewModel.uiState.collect {} }
         assertTrue(viewModel.uiState.value.dialogVisible)
         viewModel.dismissForSession()
@@ -183,6 +189,7 @@ class AppUpdateTest {
         val parsed = AppUpdatePolicy.parseAndValidate(json)
         assertNotNull(parsed)
         val viewModel = AppUpdateViewModel(2, { json }, dispatcher)
+        viewModel.checkOnce()
         val job = launch { viewModel.uiState.collect {} }
         assertTrue(viewModel.uiState.value.dialogVisible)
         assertEquals(notes, viewModel.uiState.value.releaseNotes)

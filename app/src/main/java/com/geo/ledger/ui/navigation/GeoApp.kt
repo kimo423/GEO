@@ -60,7 +60,11 @@ import com.geo.ledger.ui.home.HomeScreen
 import com.geo.ledger.ui.person.ManagePersonsScreen
 import com.geo.ledger.ui.settings.SettingsScreen
 import com.geo.ledger.ui.transactiondetail.TransactionDetailScreen
-import com.geo.ledger.ui.update.AppUpdateGate
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geo.ledger.GeoApplication
+import com.geo.ledger.ui.attachments.LocalAttachmentCounts
 
 object GeoDestinations {
     const val Home = "home"
@@ -72,6 +76,7 @@ object GeoDestinations {
     const val DetailId = "id"
     const val Persons = "persons"
     const val Categories = "categories"
+    const val History = "history"
 
     fun editor(transactionId: Long = -1L): String = "editor?transactionId=$transactionId"
 
@@ -118,6 +123,9 @@ fun GeoApp(
     navController: NavHostController = rememberNavController(),
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val repository=(LocalContext.current.applicationContext as GeoApplication).repository
+    val counts by repository.attachmentCounts.collectAsStateWithLifecycle(emptyList())
+    val countMap=remember(counts) { counts.associate { it.transactionUuid to it.count } }
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in TopLevelRoutes
     val resources = LocalResources.current
@@ -142,6 +150,7 @@ fun GeoApp(
         snackbarHostState.showSnackbar(resources.getString(messageRes))
     }
 
+    CompositionLocalProvider(LocalAttachmentCounts provides countMap) {
     Box {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -172,7 +181,7 @@ fun GeoApp(
             if (showBottomBar) {
                 GeoBottomBar(
                     currentRoute = currentRoute,
-                    onNavigate = { route -> navController.navigateTopLevel(route) },
+                    onNavigate = { route -> if(!navigationLocked) navController.navigateTopLevel(route) },
                 )
             }
         },
@@ -187,7 +196,7 @@ fun GeoApp(
                 .padding(innerPadding),
         )
     }
-    AppUpdateGate()
+    }
     }
 }
 
@@ -199,6 +208,7 @@ private fun secondaryTitle(route: String?, transactionId: Long): String = when {
     route == GeoDestinations.Persons -> stringResource(R.string.manage_persons)
     route == GeoDestinations.Categories -> stringResource(R.string.manage_categories)
     route == GeoDestinations.Detail -> stringResource(R.string.transaction_detail)
+    route == GeoDestinations.History -> "修改与删除记录"
     else -> stringResource(R.string.app_name)
 }
 
@@ -288,12 +298,15 @@ private fun GeoNavHost(
         composable(GeoDestinations.Bills) {
             BillsScreen(
                 onOpenDetail = { id -> navController.navigate(GeoDestinations.detail(id)) },
+                onOpenHistory = { navController.navigate(GeoDestinations.History) },
             )
         }
         composable(GeoDestinations.Settings) {
             SettingsScreen(
                 onOpenPersons = { navController.navigate(GeoDestinations.Persons) },
                 onOpenCategories = { navController.navigate(GeoDestinations.Categories) },
+                onOpenHistory = { navController.navigate(GeoDestinations.History) },
+                onNavigationLock = onNavigationLock,
             )
         }
         composable(
@@ -332,6 +345,7 @@ private fun GeoNavHost(
         composable(GeoDestinations.Categories) {
             ManageCategoriesScreen()
         }
+        composable(GeoDestinations.History) { com.geo.ledger.ui.history.AuditScreen() }
     }
 }
 

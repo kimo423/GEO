@@ -179,7 +179,7 @@ private fun ContentBody(
                 .weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(horizontal = com.geo.ledger.ui.theme.GeoSpacing.Page, vertical = com.geo.ledger.ui.theme.GeoSpacing.Section),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DetailRow(
@@ -220,6 +220,7 @@ private fun ContentBody(
                 value = MoneyFormatter.plain(state.balanceAfterCents),
                 valueColor = balanceColor,
             )
+            com.geo.ledger.ui.attachments.DetailAttachments(state.transactionId)
         }
         HorizontalDivider()
         Row(

@@ -23,13 +23,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import com.geo.ledger.data.local.*
+import com.geo.ledger.data.transfer.*
+import com.geo.ledger.data.attachments.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class LedgerRepository(
-    private val database: GeoDatabase,
+    internal val database: GeoDatabase,
     private val nowMillis: () -> Long = System::currentTimeMillis,
     computation: CoroutineDispatcher = Dispatchers.Default,
     sharingScope: CoroutineScope? = null,
+    val blobStore: PrivateBlobStore? = null,
 ) {
+    internal val mutationMutex = Mutex()
+    val historyDao = database.historyDao()
+    val auditHistory = historyDao.observeAudit()
+    val attachmentCounts = historyDao.observeCounts()
+    fun observeAttachments(uuid: String) = historyDao.observeAttachments(uuid)
+    suspend fun activeAttachments(uuid: String) = historyDao.activeAttachments(uuid)
     private val transactionDao = database.transactionDao()
     private val personDao = database.personOptionDao()
     private val categoryDao = database.expenseCategoryDao()
@@ -52,13 +66,17 @@ class LedgerRepository(
         }
     }
 
-    suspend fun getTransaction(id: Long): TransactionEntity? = transactionDao.getById(id)
+    suspend fun getTransaction(id: Long): TransactionEntity? = transactionDao.getById(id)?.takeUnless { it.isDeleted }
 
     suspend fun saveTransaction(
         id: Long?,
         draft: TransactionDraft,
         clientOpKey: String? = null,
-    ): Long = database.withTransaction {
+    ): Long = mutationMutex.withLock { withContext(Dispatchers.IO) {
+      draft.attachments?.forEach { record ->
+          requireNotNull(blobStore) { "附件存储不可用" }.verify(record.internalStorageKey, record.sizeBytes, record.sha256)
+      }
+      database.withTransaction {
         require(draft.amountCents >= 1) { "Amount must be positive" }
         val existingId = SaveIdempotency.resolveExistingId(
             requestedId = id,
@@ -69,6 +87,11 @@ class LedgerRepository(
         )
         val existing = existingId?.let { transactionDao.getById(it) }
         if (id != null && id > 0) requireNotNull(existing) { "Transaction does not exist" }
+        // A restored creation draft may have changed before its local ID was checkpointed.
+        // Resolve active replays as edits (identical business content remains a no-op).
+        // Never resurrect a deleted row from an old creation callback.
+        if (id == null && existing?.isDeleted == true) return@withTransaction existing.id
+        require(existing?.isDeleted != true) { "Transaction is deleted" }
 
         val now = nowMillis()
         val personSnapshot = if (draft.type == TransactionType.EXPENSE) {
@@ -97,7 +120,16 @@ class LedgerRepository(
             incomeSource = if (draft.type == TransactionType.INCOME) normalizedSource else null,
             note = normalizedNote,
             clientOpKey = existing?.clientOpKey ?: clientOpKey?.takeIf { it.isNotBlank() },
+            transactionUuid = existing?.transactionUuid ?: UUID.randomUUID().toString(),
         )
+
+        val previousAttachments = existing?.let { historyDao.activeAttachments(it.transactionUuid) }.orEmpty()
+        val attachments = (draft.attachments ?: previousAttachments).mapIndexed { index, a ->
+            a.copy(relation = a.relation.copy(transactionUuid = entity.transactionUuid, sortOrder = index, isActive = true, removedAtMillis = null))
+        }
+        val before = existing?.let { TransactionSnapshot(it, previousAttachments.map(AttachmentRef::from)) }
+        val after = TransactionSnapshot(entity, attachments.map(AttachmentRef::from)).also { it.validate() }
+        if (before != null && before.business() == after.business()) return@withTransaction existing.id
 
         val current = transactionDao.getAllOrdered()
         val candidate = if (existing == null) {
@@ -107,7 +139,7 @@ class LedgerRepository(
         }
         LedgerCalculator.validateCandidateHistory(candidate)
 
-        if (existing == null) {
+        val resultId = if (existing == null) {
             try {
                 transactionDao.insert(entity)
             } catch (error: SQLiteConstraintException) {
@@ -118,18 +150,42 @@ class LedgerRepository(
             transactionDao.update(entity)
             entity.id
         }
+        historyDao.deactivateAttachments(entity.transactionUuid, now)
+        attachments.forEach { attach ->
+            val blob = historyDao.blob(attach.relation.blobUuid)
+            if (blob == null) historyDao.insertBlob(AttachmentBlobEntity(attach.relation.blobUuid, attach.sha256,
+                attach.sizeBytes, attach.mimeType, attach.internalStorageKey, now))
+            else require(blob.sha256 == attach.sha256 && blob.sizeBytes == attach.sizeBytes && blob.internalStorageKey == attach.internalStorageKey)
+            val old = historyDao.attachment(attach.relation.attachmentUuid)
+            if (old == null) historyDao.insertAttachment(attach.relation)
+            else {
+                require(old.transactionUuid == entity.transactionUuid && old.blobUuid == attach.relation.blobUuid && old.originalFileName == attach.relation.originalFileName)
+                historyDao.updateAttachment(old.copy(sortOrder = attach.relation.sortOrder, isActive = true, removedAtMillis = null))
+            }
+        }
+        if (before != null) historyDao.insertEvent(AuditEventEntity(UUID.randomUUID().toString(), entity.transactionUuid,
+            "EDIT", "USER", now, beforeSnapshotJson = before.encode(), afterSnapshotJson = after.encode()))
+        resultId
+      }
+    }
     }
 
-    suspend fun deleteTransaction(id: Long) = database.withTransaction {
+    suspend fun deleteTransaction(id: Long) = mutationMutex.withLock { database.withTransaction {
         val existing = transactionDao.getById(id) ?: return@withTransaction
+        if (existing.isDeleted) return@withTransaction
         val remaining = transactionDao.getAllOrdered().filterNot { it.id == existing.id }
         LedgerCalculator.validateCandidateHistory(remaining)
-        transactionDao.deleteById(id)
-    }
+        val now = nowMillis()
+        val before = TransactionSnapshot(existing, historyDao.activeAttachments(existing.transactionUuid).map(AttachmentRef::from))
+        historyDao.insertEvent(AuditEventEntity(UUID.randomUUID().toString(), existing.transactionUuid,
+            "DELETE", "USER", now, beforeSnapshotJson = before.encode(), afterSnapshotJson = null))
+        historyDao.deactivateAttachments(existing.transactionUuid, now)
+        transactionDao.update(existing.copy(isDeleted = true, deletedAtMillis = now, updatedAtMillis = now))
+    } }
 
     suspend fun addPerson(name: String): Long = database.withTransaction {
         val normalized = validateOptionName(name)
-        require(personDao.countActiveByName(normalized) == 0) { "Active person name already exists" }
+        require(personDao.getAll().none { it.isActive && normalizedOptionName(it.name) == normalizedOptionName(normalized) }) { "Active person name already exists" }
         val now = nowMillis()
         preservingUniqueActiveName("Active person name already exists") {
             personDao.insert(
@@ -149,7 +205,7 @@ class LedgerRepository(
         val normalized = validateOptionName(name)
         val existing = requireNotNull(personDao.getById(id)) { "Person does not exist" }
         require(existing.isActive) { "Person is inactive" }
-        require(personDao.countActiveByName(normalized, id) == 0) { "Active person name already exists" }
+        require(personDao.getAll().none { it.isActive && it.id != id && normalizedOptionName(it.name) == normalizedOptionName(normalized) }) { "Active person name already exists" }
         preservingUniqueActiveName("Active person name already exists") {
             personDao.update(
                 existing.copy(
@@ -176,7 +232,7 @@ class LedgerRepository(
 
     suspend fun addCategory(name: String): Long = database.withTransaction {
         val normalized = validateOptionName(name)
-        require(categoryDao.countActiveByName(normalized) == 0) { "Active category name already exists" }
+        require(categoryDao.getAll().none { it.isActive && normalizedOptionName(it.name) == normalizedOptionName(normalized) }) { "Active category name already exists" }
         val now = nowMillis()
         preservingUniqueActiveName("Active category name already exists") {
             categoryDao.insert(
@@ -196,7 +252,7 @@ class LedgerRepository(
         val normalized = validateOptionName(name)
         val existing = requireNotNull(categoryDao.getById(id)) { "Category does not exist" }
         require(existing.isActive) { "Category is inactive" }
-        require(categoryDao.countActiveByName(normalized, id) == 0) { "Active category name already exists" }
+        require(categoryDao.getAll().none { it.isActive && it.id != id && normalizedOptionName(it.name) == normalizedOptionName(normalized) }) { "Active category name already exists" }
         preservingUniqueActiveName("Active category name already exists") {
             categoryDao.update(
                 existing.copy(

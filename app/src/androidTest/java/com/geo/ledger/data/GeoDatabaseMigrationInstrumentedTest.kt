@@ -47,7 +47,7 @@ class GeoDatabaseMigrationInstrumentedTest {
         }
 
         val migrated = Room.databaseBuilder(context, GeoDatabase::class.java, name)
-            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3)
+            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3, GeoDatabase.MIGRATION_3_4)
             .allowMainThreadQueries()
             .build()
         try {
@@ -83,7 +83,7 @@ class GeoDatabaseMigrationInstrumentedTest {
         }
 
         val reopened = Room.databaseBuilder(context, GeoDatabase::class.java, name)
-            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3)
+            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3, GeoDatabase.MIGRATION_3_4)
             .allowMainThreadQueries()
             .build()
         try {
@@ -122,7 +122,7 @@ class GeoDatabaseMigrationInstrumentedTest {
         }
 
         val migrated = Room.databaseBuilder(context, GeoDatabase::class.java, name)
-            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3)
+            .addMigrations(GeoDatabase.MIGRATION_1_2, GeoDatabase.MIGRATION_2_3, GeoDatabase.MIGRATION_3_4)
             .allowMainThreadQueries()
             .build()
         try {

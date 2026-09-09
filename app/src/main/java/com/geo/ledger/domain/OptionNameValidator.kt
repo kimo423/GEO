@@ -24,7 +24,8 @@ object OptionNameValidator {
         if (normalized.isEmpty()) return Result.Invalid(Reason.Blank)
         if (normalized.length > maxLength) return Result.Invalid(Reason.TooLong)
         val duplicate = activeItems.any { (id, name) ->
-            name == normalized && (excludeId == null || id != excludeId)
+            com.geo.ledger.data.transfer.normalizedOptionName(name) ==
+                com.geo.ledger.data.transfer.normalizedOptionName(normalized) && (excludeId == null || id != excludeId)
         }
         if (duplicate) return Result.Invalid(Reason.Duplicate)
         return Result.Valid(normalized)

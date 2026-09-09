@@ -19,6 +19,7 @@ enum class TransactionType {
         Index(value = ["expense_person_id"]),
         Index(value = ["expense_category_id"]),
         Index(value = ["client_op_key"], unique = true),
+        Index(value = ["transaction_uuid"], unique = true),
     ],
 )
 data class TransactionEntity(
@@ -46,6 +47,12 @@ data class TransactionEntity(
     val note: String? = null,
     @ColumnInfo(name = "client_op_key")
     val clientOpKey: String? = null,
+    @ColumnInfo(name = "transaction_uuid", defaultValue = "''")
+    val transactionUuid: String = java.util.UUID.randomUUID().toString(),
+    @ColumnInfo(name = "is_deleted", defaultValue = "0")
+    val isDeleted: Boolean = false,
+    @ColumnInfo(name = "deleted_at_millis")
+    val deletedAtMillis: Long? = null,
 )
 
 @Entity(

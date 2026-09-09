@@ -29,9 +29,8 @@ class AppUpdateViewModel(
     private val _uiState = MutableStateFlow(AppUpdateUiState())
     val uiState: StateFlow<AppUpdateUiState> = _uiState.asStateFlow()
 
-    init {
-        checkOnce()
-    }
+    // Legacy manifest adapter retained for compatibility tests; construction never networks.
+    // Production 1.2 uses SettingsToolsViewModel's explicit GitHub Release action.
 
     fun checkOnce() {
         if (!checkStarted.compareAndSet(false, true)) return

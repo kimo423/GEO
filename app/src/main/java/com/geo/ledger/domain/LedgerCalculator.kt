@@ -12,7 +12,7 @@ object LedgerCalculator {
 
     fun withRunningBalances(transactions: List<TransactionEntity>): List<LedgerEntry> {
         var balance = 0L
-        return transactions.sortedWith(stableAscendingComparator).map { transaction ->
+        return transactions.filterNot { it.isDeleted }.sortedWith(stableAscendingComparator).map { transaction ->
             require(transaction.amountCents >= 1) { "Transaction amount must be positive" }
             balance = when (transaction.type) {
                 TransactionType.INCOME -> Math.addExact(balance, transaction.amountCents)
@@ -34,7 +34,7 @@ object LedgerCalculator {
     fun requireExactAggregates(transactions: List<TransactionEntity>) {
         var income = 0L
         var expense = 0L
-        transactions.forEach { transaction ->
+        transactions.filterNot { it.isDeleted }.forEach { transaction ->
             require(transaction.amountCents >= 1) { "Transaction amount must be positive" }
             when (transaction.type) {
                 TransactionType.INCOME -> income = Math.addExact(income, transaction.amountCents)

@@ -63,7 +63,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = com.geo.ledger.ui.theme.GeoSpacing.Page, vertical = 16.dp),
     ) {
         Text(
             text = stringResource(R.string.app_name),
@@ -231,6 +231,7 @@ private fun RecentTransactionRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            com.geo.ledger.ui.attachments.TransactionAttachmentBadge(transaction.transactionUuid)
             Text(
                 text = listOfNotNull(dateLabel, subtitle).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,

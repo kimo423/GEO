@@ -29,6 +29,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.geo.ledger.data.local.AttachmentRecord
+import com.geo.ledger.data.local.TransactionAttachmentEntity
+import com.geo.ledger.data.attachments.AttachmentPolicy
+import com.geo.ledger.data.transfer.*
 
 data class AddTransactionUiState(
     val type: TransactionType = TransactionType.EXPENSE,
@@ -63,6 +69,7 @@ class AddTransactionViewModel(
     private val getTransaction: suspend (Long) -> TransactionEntity?,
     private val saveTransaction: suspend (Long?, TransactionDraft, String?) -> Long,
     private val today: () -> LocalDate = { LocalDate.now() },
+    private val attachmentRepository: LedgerRepository? = null,
 ) : ViewModel() {
     constructor(
         repository: LedgerRepository,
@@ -75,6 +82,7 @@ class AddTransactionViewModel(
         getTransaction = repository::getTransaction,
         saveTransaction = { id, draft, key -> repository.saveTransaction(id, draft, key) },
         today = today,
+        attachmentRepository = repository,
     )
 
     private val initialEditingId = savedStateHandle.get<Long>(ARG_TRANSACTION_ID) ?: NEW_TRANSACTION_ID
@@ -83,6 +91,61 @@ class AddTransactionViewModel(
     private val loadStarted = AtomicBoolean(false)
     private val _isSaving = MutableStateFlow(false)
     private val _events = Channel<AddTransactionEvent>(Channel.BUFFERED)
+    private val _attachments = MutableStateFlow<List<AttachmentRecord>>(emptyList())
+    val attachments: StateFlow<List<AttachmentRecord>> = _attachments
+    val attachmentBusy = MutableStateFlow(false)
+    val attachmentMessage = MutableStateFlow<String?>(null)
+    val attachmentLoadFailed = MutableStateFlow(false)
+
+    private fun persistAttachments() {
+        savedStateHandle["attachment_draft"] = StrictJson.stringify(_attachments.value.map { record ->
+            AttachmentRef.from(record).json() + mapOf("internalStorageKey" to record.internalStorageKey,
+                "createdAtMillis" to record.relation.createdAtMillis)
+        })
+    }
+
+    fun addAttachments(context: android.content.Context, uris: List<android.net.Uri>) {
+        if (uris.isEmpty() || attachmentBusy.value || _isSaving.value) return
+        attachmentBusy.value=true
+        viewModelScope.launch {
+            val newRecords=mutableListOf<AttachmentRecord>()
+            try {
+                val store=requireNotNull(attachmentRepository?.blobStore)
+                require(_attachments.value.size + uris.size<=10) { AttachmentPolicy.COUNT_ERROR }
+                val existing=_attachments.value
+                withContext(Dispatchers.IO) {
+                    var remaining=AttachmentPolicy.MAX_TOTAL-existing.sumOf { it.sizeBytes }
+                    uris.forEach { uri ->
+                        val resolver=context.contentResolver
+                        var name="附件"
+                        resolver.query(uri,arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),null,null,null)?.use {
+                            if(it.moveToFirst() && !it.isNull(0)) name=it.getString(0).take(255)
+                                .let { value->if(value.lastOrNull()?.let(Character::isHighSurrogate)==true) value.dropLast(1) else value }.ifBlank { "附件" }
+                        }
+                        val mime=resolver.getType(uri)?.takeIf { Regex("[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+").matches(it) } ?: "application/octet-stream"
+                        val stored=requireNotNull(resolver.openInputStream(uri)) { "无法读取该文件，请重新选择" }.use { store.put(it,minOf(AttachmentPolicy.MAX_FILE,remaining)) }
+                        remaining-=stored.size
+                        newRecords+=AttachmentRecord(TransactionAttachmentEntity(UUID.randomUUID().toString(),"",UUID.randomUUID().toString(),
+                            name,existing.size+newRecords.size,true,System.currentTimeMillis()),stored.sha256,stored.size,mime,stored.key)
+                    }
+                }
+                AttachmentPolicy.validate((existing+newRecords).map { it.sizeBytes })
+                (existing+newRecords).map(AttachmentRef::from).forEach { it.validate() }
+                _attachments.value=existing+newRecords; persistAttachments()
+            } catch(e: Exception) {
+                withContext(kotlinx.coroutines.NonCancellable+Dispatchers.IO) {
+                    newRecords.forEach { attachmentRepository?.blobStore?.file(it.internalStorageKey)?.delete() }
+                }
+                if(e is CancellationException) throw e
+                attachmentMessage.value=if(e is java.io.IOException || e is SecurityException) "无法读取该文件，请重新选择" else e.message ?: "无法读取该文件，请重新选择"
+            } finally { attachmentBusy.value=false }
+        }
+    }
+    fun removeAttachment(uuid: String) {
+        if(attachmentBusy.value || _isSaving.value) return
+        _attachments.value=_attachments.value.filterNot { it.relation.attachmentUuid==uuid }.mapIndexed { i,r -> r.copy(relation=r.relation.copy(sortOrder=i)) }
+        persistAttachments()
+    }
 
     val events = _events.receiveAsFlow()
 
@@ -160,11 +223,13 @@ class AddTransactionViewModel(
                 active = options.persons.map { it.id to it.name },
                 selectedId = fields.personId,
                 historicalSnapshot = options.personSnapshot.ifBlank { null },
+                allowDetachedSnapshot = true,
             ),
             categoryChips = OptionSnapshotPolicy.chips(
                 active = options.categories.map { it.id to it.name },
                 selectedId = fields.categoryId,
                 historicalSnapshot = options.categorySnapshot.ifBlank { null },
+                allowDetachedSnapshot = true,
             ),
             isSaving = meta.saving,
             canSave = valid && !meta.saving && amountIssue == MoneyParser.DraftIssue.None,
@@ -190,6 +255,27 @@ class AddTransactionViewModel(
             savedStateHandle[KEY_CLIENT_OP] = UUID.randomUUID().toString()
         }
         hydrateExistingIfNeeded()
+        if(attachmentRepository!=null) {
+            attachmentBusy.value=true
+            viewModelScope.launch {
+                try {
+                    val saved=savedStateHandle.get<String>("attachment_draft")
+                    _attachments.value=if(saved!=null) (StrictJson.parse(saved) as List<*>).map { item ->
+                        val ref=AttachmentRef.parse(item); val o=item.jsonObject()
+                        AttachmentRecord(TransactionAttachmentEntity(ref.attachmentUuid,"",ref.blobUuid,ref.originalFileName,ref.sortOrder,true,o.long("createdAtMillis")),
+                            ref.sha256,ref.sizeBytes,ref.mimeType,o.string("internalStorageKey"))
+                    } else if(initialEditingId>0) attachmentRepository.getTransaction(initialEditingId)?.let {
+                        attachmentRepository.activeAttachments(it.transactionUuid)
+                    }.orEmpty() else emptyList()
+                    persistAttachments()
+                } catch(e: Exception) {
+                    if(e is CancellationException) throw e
+                    attachmentLoadFailed.value=true
+                    attachmentMessage.value="附件加载失败，请返回后重试，已禁止保存以保护原附件"
+                }
+                finally { attachmentBusy.value=false }
+            }
+        }
     }
 
     fun setType(type: TransactionType) {
@@ -235,6 +321,7 @@ class AddTransactionViewModel(
         savedStateHandle[editedKey] = true
         if (chip.historical) {
             savedStateHandle[idKey] = NONE_ID
+            savedStateHandle[snapshotKey] = ""
             return
         }
         val current = savedStateHandle.get<Long>(idKey) ?: NONE_ID
@@ -243,17 +330,17 @@ class AddTransactionViewModel(
         savedStateHandle[idKey] = selectedId
         if (selectedId == chip.id) {
             savedStateHandle[snapshotKey] = chip.label
-        }
+        } else savedStateHandle[snapshotKey] = ""
     }
 
     fun onSourceChange(value: String) {
         if (_isSaving.value) return
-        savedStateHandle[KEY_SOURCE] = value.take(LedgerRepository.MAX_SOURCE_LENGTH)
+        savedStateHandle[KEY_SOURCE] = AttachmentPolicy.truncateText(value,LedgerRepository.MAX_SOURCE_LENGTH)
     }
 
     fun onNoteChange(value: String) {
         if (_isSaving.value) return
-        savedStateHandle[KEY_NOTE] = value.take(LedgerRepository.MAX_NOTE_LENGTH)
+        savedStateHandle[KEY_NOTE] = AttachmentPolicy.truncateText(value,LedgerRepository.MAX_NOTE_LENGTH)
     }
 
     fun setDate(date: LocalDate) {
@@ -262,6 +349,7 @@ class AddTransactionViewModel(
     }
 
     fun save() {
+        if(attachmentBusy.value || attachmentLoadFailed.value) return
         val snapshot = uiState.value
         if (!snapshot.canSave) return
         if (!saveInFlight.compareAndSet(false, true)) return
@@ -289,7 +377,7 @@ class AddTransactionViewModel(
                     val editId = (savedStateHandle.get<Long>(ARG_TRANSACTION_ID) ?: NEW_TRANSACTION_ID)
                         .takeIf { it > 0 }
                     val clientOpKey = savedStateHandle.get<String>(KEY_CLIENT_OP)
-                    val savedId = saveTransaction(editId, draft, clientOpKey)
+                    val savedId = saveTransaction(editId, if(attachmentRepository==null) draft else draft.copy(attachments=_attachments.value), clientOpKey)
                     if (savedId > 0) {
                         savedStateHandle[ARG_TRANSACTION_ID] = savedId
                     }

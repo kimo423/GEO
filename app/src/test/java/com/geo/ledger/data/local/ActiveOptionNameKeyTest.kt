@@ -36,7 +36,7 @@ class ActiveOptionNameKeyTest {
         assertTrue(schema.contains("client_op_key"))
         assertTrue(schema.contains("index_transactions_client_op_key"))
         assertTrue(source.contains("MIGRATION_2_3"))
-        assertTrue(source.contains("addMigrations(MIGRATION_1_2, MIGRATION_2_3)"))
+        assertTrue(source.contains("addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)"))
         assertFalse(source.contains("fallbackToDestructiveMigration"))
     }
 

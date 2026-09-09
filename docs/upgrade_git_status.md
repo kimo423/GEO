@@ -1,0 +1,104 @@
+# GEO upgrade Git status
+
+2026-09-09 final snapshot: 95 changed/untracked file entries. Original main,
+HEAD e73ef41, origin https://github.com/kimo423/GEO.git preserved. No commit or push.
+Build/dist/log outputs remain ignored. `git diff --check` passes (line-ending
+conversion warnings only). These upgrades remain uncommitted for user review.
+
+```text
+M README.md
+ M app/build.gradle.kts
+ M app/src/androidTest/java/com/geo/ledger/data/GeoDatabaseMigrationInstrumentedTest.kt
+ M app/src/androidTest/java/com/geo/ledger/data/LedgerRepositoryInstrumentedTest.kt
+ M app/src/main/AndroidManifest.xml
+ M app/src/main/java/com/geo/ledger/GeoApplication.kt
+ M app/src/main/java/com/geo/ledger/data/LedgerRepository.kt
+ M app/src/main/java/com/geo/ledger/data/local/Entities.kt
+ M app/src/main/java/com/geo/ledger/data/local/GeoDao.kt
+ M app/src/main/java/com/geo/ledger/data/local/GeoDatabase.kt
+ M app/src/main/java/com/geo/ledger/domain/LedgerCalculator.kt
+ M app/src/main/java/com/geo/ledger/domain/LedgerModels.kt
+ M app/src/main/java/com/geo/ledger/domain/OptionNameValidator.kt
+ M app/src/main/java/com/geo/ledger/domain/OptionSelection.kt
+ M app/src/main/java/com/geo/ledger/ui/addtransaction/AddTransactionScreen.kt
+ M app/src/main/java/com/geo/ledger/ui/addtransaction/AddTransactionViewModel.kt
+ M app/src/main/java/com/geo/ledger/ui/bills/BillsScreen.kt
+ M app/src/main/java/com/geo/ledger/ui/home/HomeScreen.kt
+ M app/src/main/java/com/geo/ledger/ui/navigation/GeoApp.kt
+ M app/src/main/java/com/geo/ledger/ui/settings/SettingsScreen.kt
+ M app/src/main/java/com/geo/ledger/ui/theme/Theme.kt
+ M app/src/main/java/com/geo/ledger/ui/transactiondetail/TransactionDetailScreen.kt
+ M app/src/main/java/com/geo/ledger/update/AppUpdateViewModel.kt
+ M app/src/main/res/xml/backup_rules.xml
+ M app/src/main/res/xml/data_extraction_rules.xml
+ M app/src/test/java/com/geo/ledger/data/BackupAndPermissionManifestTest.kt
+ M app/src/test/java/com/geo/ledger/data/local/ActiveOptionNameKeyTest.kt
+ M app/src/test/java/com/geo/ledger/update/AppUpdateTest.kt
+ M docs/build_status.md
+ M docs/delivery_manifest.md
+ M docs/grok_bug_hunt.md
+ M docs/grok_implementation_review.md
+ M docs/known_issues.md
+ M docs/manual_test_checklist.md
+ M docs/test_report.md
+?? app/schemas/com.geo.ledger.data.local.GeoDatabase/4.json
+?? app/src/main/java/com/geo/ledger/data/attachments/AttachmentPolicy.kt
+?? app/src/main/java/com/geo/ledger/data/attachments/PrivateBlobStore.kt
+?? app/src/main/java/com/geo/ledger/data/local/HistoryEntities.kt
+?? app/src/main/java/com/geo/ledger/data/transfer/ConfigTransfer.kt
+?? app/src/main/java/com/geo/ledger/data/transfer/DataArchive.kt
+?? app/src/main/java/com/geo/ledger/data/transfer/DataTransfer.kt
+?? app/src/main/java/com/geo/ledger/data/transfer/Snapshots.kt
+?? app/src/main/java/com/geo/ledger/data/transfer/StrictJson.kt
+?? app/src/main/java/com/geo/ledger/ui/attachments/AttachmentList.kt
+?? app/src/main/java/com/geo/ledger/ui/history/AuditScreen.kt
+?? app/src/main/java/com/geo/ledger/ui/settings/SettingsToolsViewModel.kt
+?? app/src/main/java/com/geo/ledger/update/ReleaseVersion.kt
+?? app/src/main/res/xml/attachment_paths.xml
+?? app/src/test/java/com/geo/ledger/data/ArchiveRoundTripTest.kt
+?? app/src/test/java/com/geo/ledger/data/ArchiveSecurityTest.kt
+?? app/src/test/java/com/geo/ledger/data/PrivateBlobStoreTest.kt
+?? app/src/test/java/com/geo/ledger/data/RoomHostSmokeTest.kt
+?? app/src/test/java/com/geo/ledger/data/TransferPrimitivesTest.kt
+?? app/src/test/java/com/geo/ledger/data/UpgradeRepositoryTest.kt
+?? app/src/test/java/com/geo/ledger/data/UpgradeUiContractsTest.kt
+?? app/src/test/java/com/geo/ledger/ui/SettingsToolsViewModelTest.kt
+?? app/src/test/java/com/geo/ledger/ui/UpgradeComposeSmokeTest.kt
+?? app/src/test/java/com/geo/ledger/update/ReleaseVersionTest.kt
+?? docs/data_format.md
+?? docs/grok_bug_hunt_v1.1_archived.md
+?? docs/grok_implementation_review_v1.1_archived.md
+?? docs/prompts/upgrade_architecture_a.md
+?? docs/prompts/upgrade_architecture_b.md
+?? docs/prompts/upgrade_postfix_a.md
+?? docs/prompts/upgrade_postfix_b.md
+?? docs/prompts/upgrade_round2_a.md
+?? docs/prompts/upgrade_round2_b.md
+?? docs/prompts/upgrade_round2_verify_a.md
+?? docs/prompts/upgrade_round2_verify_b.md
+?? docs/prompts/upgrade_round3_a.md
+?? docs/prompts/upgrade_round3_b.md
+?? docs/ui-review/host-bills-data.png
+?? docs/ui-review/host-history-edit.png
+?? docs/ui-review/host-history-empty.png
+?? docs/ui-review/host-home-data.png
+?? docs/ui-review/host-settings-about.png
+?? docs/ui-review/host-settings.png
+?? docs/upgrade-b-tests/create_replay_drops_draft.py
+?? docs/upgrade-b-tests/zip_directory_prefix.py
+?? docs/upgrade-release-response.json
+?? docs/upgrade_1.2_design.md
+?? docs/upgrade_architecture_a.md
+?? docs/upgrade_architecture_a_verify.md
+?? docs/upgrade_architecture_b.md
+?? docs/upgrade_architecture_b_verify.md
+?? docs/upgrade_baseline.md
+?? docs/upgrade_delivery_report.md
+?? docs/upgrade_git_status.md
+?? docs/upgrade_round2_a.md
+?? docs/upgrade_round2_a_verify.md
+?? docs/upgrade_round2_b.md
+?? docs/upgrade_round2_resolution.md
+?? docs/upgrade_validation_manifest.json
+?? tools/package_upgrade.ps1
+```

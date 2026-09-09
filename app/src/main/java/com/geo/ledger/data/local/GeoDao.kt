@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface TransactionDao {
     @Query(
         """
-        SELECT * FROM transactions
+        SELECT * FROM transactions WHERE is_deleted = 0
         ORDER BY transaction_date ASC, created_at_millis ASC, id ASC
         """,
     )
@@ -18,7 +18,7 @@ interface TransactionDao {
 
     @Query(
         """
-        SELECT * FROM transactions
+        SELECT * FROM transactions WHERE is_deleted = 0
         ORDER BY transaction_date ASC, created_at_millis ASC, id ASC
         """,
     )
@@ -39,12 +39,18 @@ interface TransactionDao {
     @Update
     suspend fun update(entity: TransactionEntity)
 
-    @Query("DELETE FROM transactions WHERE id = :id")
-    suspend fun deleteById(id: Long): Int
+    @Query("SELECT * FROM transactions ORDER BY transaction_date, created_at_millis, id")
+    suspend fun getAllIncludingDeleted(): List<TransactionEntity>
+    @Query("SELECT * FROM transactions WHERE transaction_uuid=:uuid")
+    suspend fun getByUuid(uuid: String): TransactionEntity?
+    @Query("DELETE FROM transactions")
+    suspend fun clearForRestore()
 }
 
 @Dao
 interface PersonOptionDao {
+    @Query("SELECT * FROM person_options ORDER BY sort_order,id")
+    suspend fun getAll(): List<PersonOptionEntity>
     @Query("SELECT * FROM person_options WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")
     fun observeActive(): Flow<List<PersonOptionEntity>>
 
@@ -69,6 +75,8 @@ interface PersonOptionDao {
 
 @Dao
 interface ExpenseCategoryDao {
+    @Query("SELECT * FROM expense_categories ORDER BY sort_order,id")
+    suspend fun getAll(): List<ExpenseCategoryEntity>
     @Query("SELECT * FROM expense_categories WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")
     fun observeActive(): Flow<List<ExpenseCategoryEntity>>
 

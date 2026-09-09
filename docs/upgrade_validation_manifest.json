@@ -1,0 +1,451 @@
+{
+  "sourceDigest": "54720AEC4A3FAEEE88910589D601AD0186B70A84F67CAEED517A2158000B893E",
+  "apkSha256": "712C7192258F1C6D1DCF110E4FE68C7829D6B649847CF1FDBF5E7A2C811F0CD9",
+  "apkBytes": 20178362,
+  "tests": 127,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "lintErrors": 0,
+  "lintWarnings": 12,
+  "gradleExit": 0,
+  "deviceTests": "not run",
+  "entries": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "2C69E48E32C1994B7368A400DC80CFEDB14F23EF82F8DA5A082F64EB907C4BF9"
+    },
+    {
+      "path": "app/schemas/com.geo.ledger.data.local.GeoDatabase/1.json",
+      "sha256": "F456077FEEABF6CB619242B3B32E6B2393315461878D2CE0FDBE1302F7E89145"
+    },
+    {
+      "path": "app/schemas/com.geo.ledger.data.local.GeoDatabase/2.json",
+      "sha256": "7CAB6978A519F40802935D2C7C83E918AB09636EA27F97E7E103139173F25AF4"
+    },
+    {
+      "path": "app/schemas/com.geo.ledger.data.local.GeoDatabase/3.json",
+      "sha256": "A9DF3F9FAB1DBC6E1F158243E795D8790F1A0796F6A8A657CBC4230A1BA3E21D"
+    },
+    {
+      "path": "app/schemas/com.geo.ledger.data.local.GeoDatabase/4.json",
+      "sha256": "E918B022F4A6A4AF7EB0C4A9CA25E85CA717247D03A07084F7136AA5570867E2"
+    },
+    {
+      "path": "app/src/androidTest/java/com/geo/ledger/data/GeoDatabaseMigrationInstrumentedTest.kt",
+      "sha256": "16A20F8D5E2FD36E480D4FCF126D2D6E7F8F0511C324ACDAFE87FDE02384282F"
+    },
+    {
+      "path": "app/src/androidTest/java/com/geo/ledger/data/LedgerRepositoryInstrumentedTest.kt",
+      "sha256": "AFAE04D9ECED159934344EF1C72751CD2CBA4C03EC6F033E21BA58C7FEB22356"
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "sha256": "2A232021AADB8116C8255FE678E010663689C31EDB67C22110926D4D4D4EAF2C"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/attachments/AttachmentPolicy.kt",
+      "sha256": "C81F285F09CEA89D73648E695E7F3D8015ABD1F7F60D542D0E6D7997AB80C7F1"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/attachments/PrivateBlobStore.kt",
+      "sha256": "7FFACBC46BDABC02962373A0598C98F86D576DA3E98B67C599EEFCDE89ABFFB1"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/LedgerRepository.kt",
+      "sha256": "E8958E2B4828BDCA1F0D67E4DBD7519864664E4F532A60453B849493240816CE"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/local/Entities.kt",
+      "sha256": "29C1F20D18ED6006483CD592E2647CE50211CCF4510CE6C97590C987F1378422"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/local/GeoDao.kt",
+      "sha256": "57250D332B674ECA36286F10375444BF10B1449DAF6480FA67E71456FD0B4F09"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/local/GeoDatabase.kt",
+      "sha256": "338998E684CC268E6C3A96C019AAA649D8A33BCC9C7A3B83BCE8C9BBD6F1DF4E"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/local/HistoryEntities.kt",
+      "sha256": "E63C8C1EAD7E6021E48695B4EE6B53D63BBCA847E22E20BF6E5D72CCEC771EEC"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/transfer/ConfigTransfer.kt",
+      "sha256": "737F93567FA8B15CEB215332B2C73BFAF31876710FDA5E11162126D06B2321CC"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/transfer/DataArchive.kt",
+      "sha256": "D411A4FA55D380BD0EC64CA6F3F8DEC767FE08F6D0F93C098BA5A4F239FAB3E6"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/transfer/DataTransfer.kt",
+      "sha256": "8168740EE89EE1D2930CD39169CF9291B0DDCC7F74C401821CFC52240A564235"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/transfer/Snapshots.kt",
+      "sha256": "C346ED49F79DC9A367CE25D26BDD13C12AA1BA04E6B0AAF1F83A24EAB7E58985"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/data/transfer/StrictJson.kt",
+      "sha256": "61B3D43CE50308026EF08DAE4623344CF9D8DF75E5FE780DD50AC87C03E1B8D8"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/BillsQuery.kt",
+      "sha256": "945778D6783DB0EBDBDCD82216725418D9F1471F2682D4B76784B3A163CB9487"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/HomeDashboard.kt",
+      "sha256": "BC82ECA1BE5C6CA95E87C0281CBAB3F550329983417DE347E16A882BFEDF2614"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/LedgerCalculator.kt",
+      "sha256": "1ACF168818A8194C81058B57FA41DE1CB9199F4C428D45F948EF64608A5EB6DD"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/LedgerModels.kt",
+      "sha256": "FF6171B3517A809B3FD428970AB739309A08214A1552F46B1D14419C6967E8F1"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/LedgerObservation.kt",
+      "sha256": "53E7EB710722B5205F52459F9C5C0275DFA2DB61FFF3FD8AF7BDFAAE186446B9"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/LedgerObservationPipeline.kt",
+      "sha256": "7986F858CC20804F4FB1C91947173CC6E2A6A344CE4B06CD42CC7DBE24CD08F6"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/NavigationLockPolicy.kt",
+      "sha256": "4197B6410CA13DF1AF098CFDF07D4C4A25137EDDDBCF249E68559863C1EFD7EE"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/OptionNameValidator.kt",
+      "sha256": "A538F3BBF322172B3F79DFC803CCC1C083387C8B2AC870B6A1DB5581F773B810"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/OptionSelection.kt",
+      "sha256": "4C5EF170E01B0D68873FB3A98BA9736C21C50C24B81CB6FC63054A4582B1A749"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/SaveIdempotency.kt",
+      "sha256": "06C7599EEA8086FDB8E1A24AD25FA164BDDAA999A4B49B42EFE7D24464ED73D9"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/domain/TransactionDisplay.kt",
+      "sha256": "6EBDBAD6A05686701BB44E8AED59C4404569CEA179F9B9641E24513F262532D3"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/GeoApplication.kt",
+      "sha256": "07E0385A29205214AD269A4E3D1B1921A9155E41C0A9E3BBAF42F5EC02638AC3"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/MainActivity.kt",
+      "sha256": "06201D90E04DD02C8FB86E9E9EAB220B889D182785500575E4B7489543D543DA"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/addtransaction/AddTransactionScreen.kt",
+      "sha256": "B034F3B56F7A1DDBD4418B16860D0C4C085E967E7197966DF7FA5353B0B82868"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/addtransaction/AddTransactionValidator.kt",
+      "sha256": "87CD6131CA71ED1627DF9A72ED1535CA3BF097584683697D6A6E0C3DA8F8535D"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/addtransaction/AddTransactionViewModel.kt",
+      "sha256": "3F6649CCBFBD15FF125FBC628A6DA60DBC4BA0EC3EF463D7F851D7D45AAEDF38"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/attachments/AttachmentList.kt",
+      "sha256": "73068CC6B83BBEDFB06050C92100BA0B7DA58899E2F088F45A2BC10767B43EB3"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/bills/BillsScreen.kt",
+      "sha256": "8F3FA9FF76F7FF05194C1E8F4F44B0978DC15DDF85D519B7F80C4F42ADBE70C1"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/bills/BillsViewModel.kt",
+      "sha256": "1B9417066565A15D48A923DC23C9A62468F82E099487883C04822CD986178E0E"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/category/ManageCategoriesScreen.kt",
+      "sha256": "BE467E8429A08FA8F79701C6906E4F67956BBF0C2EEDE2693460EE1C84006749"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/category/ManageCategoriesViewModel.kt",
+      "sha256": "4D3B27909D9AF121AE28543DB75A09371337E8CF92219EAB822D9CD13F220D0F"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/GeoViewModelFactory.kt",
+      "sha256": "4C19E4E452CC796707B442F3388E694620619BA4B74D9E3EC595071C45259DA0"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/history/AuditScreen.kt",
+      "sha256": "4F54BA18D51D1043592E544C0994279C2BB9CEC0EACA232DBE17ACAC62BF2893"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/home/HomeScreen.kt",
+      "sha256": "AD052855A2232BEFDCE1497EA22003D0B8C7575B0E56A6D14A1A48CF2ACE5FA7"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/home/HomeViewModel.kt",
+      "sha256": "709CA547C9B6DF6DCBD84F301F93A4920C4C34CD42C94E9DF5AC47F184617C0C"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/navigation/GeoApp.kt",
+      "sha256": "DBED65BF38E511BAF9F93E9307F446541A2786CC7E5EB266CB73FC033E053845"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/navigation/GeoNavTransitions.kt",
+      "sha256": "1F4E2418E75C3B34779029DAD43087E73E163F2E267D443E093F69B44E64A43A"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/options/ManageOptionsContent.kt",
+      "sha256": "7039A679B773FE299A4FC86E470344F61B155130E8932DEEE6A7493717F210BB"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/options/OptionMutationController.kt",
+      "sha256": "A2ACFBDC580478D6382405FC67035A7DF7AA085E5D021CDCF325FF0DED2B4D9B"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/person/ManagePersonsScreen.kt",
+      "sha256": "F5DD4CD5F23868B46A6F887F9E82E99F54483758A44361E5DB85E8F4D3A389B5"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/person/ManagePersonsViewModel.kt",
+      "sha256": "575750E1543BD2692C23D0017955FF2DFA111BDC691682C2B6D05B03D8BDC9F7"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/settings/SettingsScreen.kt",
+      "sha256": "C2E46395FEE9FCB54047FF6E5A25B536909EFFD32D6E540B0F7DF36F6A919CCC"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/settings/SettingsToolsViewModel.kt",
+      "sha256": "E4D74B2EC2D8402CF6AA308CF64B744E9387991B85C5FE94B71225E7072E73F4"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/theme/Theme.kt",
+      "sha256": "88539769EABBF00A231468791ACFFD3E30139DBA84C0C95781F8D8A69967539B"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/transactiondetail/TransactionDetailScreen.kt",
+      "sha256": "2E8CD9CE64C1E1E08B1A7E3770A05A6892F80446C12E29DFAD08B2EEC03DCCEC"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/transactiondetail/TransactionDetailUi.kt",
+      "sha256": "FB50C1839C40C42A11397249C4A283C2BF303556A7DD8497BD48D03A86EE3A01"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/transactiondetail/TransactionDetailViewModel.kt",
+      "sha256": "1CFB61565B431A22946CA6703F02E3C410B3D85BDA81A2C476C80BF32E89E405"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/ui/update/AppUpdateDialog.kt",
+      "sha256": "4F8534706BC2BA5DBD0558F02139DC5324F0A3C827A52DA81945E08936E4B018"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/update/AppUpdate.kt",
+      "sha256": "DB2710CD1AA0D1549183DD21EE4B8946007CD20082E28337A87F993E53568F4F"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/update/AppUpdateHttp.kt",
+      "sha256": "70E8486356ED0BBB27E2CEF7B5A1539530293439B1B9412E489510CFFAED5799"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/update/AppUpdateLaunch.kt",
+      "sha256": "EEF613801CAD7EB1DBE1107BE5F090D08C8F3EB9E8882E0A3F308E64B8D0BEF9"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/update/AppUpdateViewModel.kt",
+      "sha256": "F152E44D6D3943EF03D3799F7DE0B808A29E0EB2B2DA0A4D6C06C35839D11485"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/update/ReleaseVersion.kt",
+      "sha256": "24A64F3818CBB5B4F7E61C8BB3DB5A1CBE8023B8CE7905C0436DD3381C23FB7A"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/util/GeoDates.kt",
+      "sha256": "1F35F54C7FECE479E6882E2B9D88E8F0AA4FE7BF14416164A0AA6839EF54DEEF"
+    },
+    {
+      "path": "app/src/main/java/com/geo/ledger/util/Money.kt",
+      "sha256": "6FE507D934D5343C4DD348AB901E2E9320E9B7E5B1E6666076F6894120D52A9E"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxxhdpi/ic_launcher_foreground.png",
+      "sha256": "0CC98A5EFF226EAB69F96072AB77FEFFCEF5450780C1035E746675FDB15BD9DB"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxxhdpi/ic_launcher_monochrome.png",
+      "sha256": "FB1C836325A8942071D153BA6003B68B153AC3EEEF318FF953429222C57DA876"
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "BBAF996B7B1356DA55819D20C1920C34E20B1288FE7CEC441AEFEDA5EA53D24A"
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "BBAF996B7B1356DA55819D20C1920C34E20B1288FE7CEC441AEFEDA5EA53D24A"
+    },
+    {
+      "path": "app/src/main/res/values/colors.xml",
+      "sha256": "0ABA27635FD33B1E2E87F2730FB39E7040C1210E4AC55C737FFDCF7FB7932BA0"
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "sha256": "192EBFCE1547B7C980D631FB9304FF0507D5D09C1F9216528C68286F524B6D38"
+    },
+    {
+      "path": "app/src/main/res/values/styles.xml",
+      "sha256": "581DD2921CDC89EC6872168DFD9242539E259E46ABDB13120366A2E6589578DF"
+    },
+    {
+      "path": "app/src/main/res/xml/attachment_paths.xml",
+      "sha256": "516311F8E69DDE9980251191B76EDA780EE6F467BF23D972C49339C7A138F919"
+    },
+    {
+      "path": "app/src/main/res/xml/backup_rules.xml",
+      "sha256": "0E3042049263D3FAC2EF4F1426BFEC4B678B0FCB406962B18CFD724707231880"
+    },
+    {
+      "path": "app/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "15D35533C54EA33EE9F906B5C8FF0955A5AF6384D12724B0F7456A782F822D54"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/ArchiveRoundTripTest.kt",
+      "sha256": "40D0A1EAC134BFA86FFD7D09C3FBF9ECBF861577CCF7D5F2F006775F20EF3DB0"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/ArchiveSecurityTest.kt",
+      "sha256": "DD6A3D65880D9EE4AD72195407D9CF428E23A3D999C5233C175956AA17E2F707"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/BackupAndPermissionManifestTest.kt",
+      "sha256": "06D27E55F8D9EEC2BE49578255F36BFDEE1916474A09535DA2F66117E1D200C7"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/local/ActiveOptionNameKeyTest.kt",
+      "sha256": "26FE63DC70660DC17C92AA686D881DDCA63135C5FC6AFCB2EA7B911D21D9A184"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/PrivateBlobStoreTest.kt",
+      "sha256": "648B86335CF6C0EAF81F833A9AE3EB0DDA078F2FA7EE73206B00C38276B74510"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/RoomHostSmokeTest.kt",
+      "sha256": "C33D2F13BEEDD6391E52A044BA488309F14495160F30A70FF9D7ACE403AABEAB"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/TransferPrimitivesTest.kt",
+      "sha256": "3E2CDEBF086F8164511CA7323C4E5677425F807AEDE5940DD51C79EA16515027"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/UpgradeRepositoryTest.kt",
+      "sha256": "3176AF25C0E5260DD8FAF6CE881608C40B252B2C482841B4E26547CE6E02015E"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/data/UpgradeUiContractsTest.kt",
+      "sha256": "100D2077AB67083F4D94ACA2A9358A7BC0EB3D4A2E80A3091DF71BE196C5D8A7"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/BillsQueryTest.kt",
+      "sha256": "5866DA8A5675A580C63CC525B296ECB29DBF2DA65683841840192D684AFDAE7D"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/HomeDashboardTest.kt",
+      "sha256": "7F7130F0E71E0993BBBCACF87F84E689720EA39B91EFC775CE6C8D18FB1E4E61"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/LedgerCalculatorTest.kt",
+      "sha256": "8F484F5421CBFC343B14B38E7DEDC8A5AE9811CF5E8F4648FBA7E671F61FDCF1"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/LedgerObservationPipelineTest.kt",
+      "sha256": "FD0A4CBF6CA035B533985C4C4F5CC5F71942B23C9DC1558D40887723243DE00F"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/LedgerTestData.kt",
+      "sha256": "3CF609F228BC9F4840A71ECD7BC55F39A49310B9B254ACBD459E744D95522AB4"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/NavigationLockPolicyTest.kt",
+      "sha256": "67D213652426BC8B818301D74F0A790070E1BF425089ED7C1986181BABC660FB"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/OptionNameValidatorTest.kt",
+      "sha256": "EA28BD3CB9AD9D8270CEA5E540A9E562E9200D251E480C7142BA456C2793072E"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/domain/Round2PoliciesTest.kt",
+      "sha256": "86BA3BD7400DEFD8888DC2C67B728A66C849493532DE7FEB33D083168709EC11"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/addtransaction/AddTransactionValidatorTest.kt",
+      "sha256": "F185D977F467E8F12C4FAAADB2342DF648CF6C202E2A50DBC3CF07CEC27C0B63"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/addtransaction/AddTransactionViewModelTest.kt",
+      "sha256": "6B09AD618A1FAA28FEFB3AC81901A9D250F1B3B67C211A03AFE976ED581F107A"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/bills/BillsViewModelTest.kt",
+      "sha256": "9E85DE09FB09726F8871AB39DD9FA4B5AF82E1FF1028DAD530CA9C8B15100685"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/home/HomeViewModelTest.kt",
+      "sha256": "7C8488FB70AF947294F086587889D9DEBB1EFAFF786F590C5CF060DD75457C09"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/navigation/GeoNavTransitionsTest.kt",
+      "sha256": "0369D16F3AE2F3A0096A9650BA7BCC0850578EC3B294E2BD51F12209F1B47A10"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/SettingsToolsViewModelTest.kt",
+      "sha256": "4A57788FB5D2FE41E08A2C9D63E60C89AEE3FDB883A42158C043974128D02E4F"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/transactiondetail/TransactionDetailUiMapperTest.kt",
+      "sha256": "DFE5AF5461D410030EDD95C0DB36878695459C199B972F5B6FC3503C8CC612A3"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/transactiondetail/TransactionDetailViewModelTest.kt",
+      "sha256": "9DDD74831CBB52F82BB76E641F34F937CA24AA289E63B22E240B79AE6367C5A4"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/ui/UpgradeComposeSmokeTest.kt",
+      "sha256": "376F02C33045AC5D43FC2D729FA58822259E4F0A0BD72219DADE9AC2B943055C"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/update/AppUpdateTest.kt",
+      "sha256": "F700FF5BA2E6D2F499AEFA4526A6644FB67E9BFBF7CE82BFD0D612751176C8F7"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/update/ReleaseVersionTest.kt",
+      "sha256": "A2BDAC18AA19612A79EF96B3FFE2ACB2B9DF4E47004C21D40414F11354AC5E10"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/util/GeoDatesTest.kt",
+      "sha256": "75EAB7542798DCF99A73FCA329E9A8334D90F7298F05653F937688EC7D983A03"
+    },
+    {
+      "path": "app/src/test/java/com/geo/ledger/util/MoneyParserTest.kt",
+      "sha256": "B4F133545718A8D82F30AAA64A2481798A0D647E109ACA10B5F73518BFE5C588"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "B688C4266D77C22B568A43F0529AB1B023B01765A426D113AE688A2CB13200B7"
+    },
+    {
+      "path": "docs/upgrade-release-response.json",
+      "sha256": "D96297B399323F839A26C4629070CDEEEB838DB3604ECCF24A7E1D7A83D3DD54"
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "899417C6CB034F123DD5C791FC174E2EC912E0F01E93E155A716E50307F0272A"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "C20E471778A6130823003C7D08D276F01982003F8027B874253D2BCD1DCB8F7C"
+    }
+  ]
+}

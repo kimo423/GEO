@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
@@ -74,6 +75,7 @@ import java.time.LocalDate
 @Composable
 fun BillsScreen(
     onOpenDetail: (Long) -> Unit,
+    onOpenHistory: () -> Unit = {},
     viewModel: BillsViewModel = composeViewModel(
         factory = GeoViewModelFactory(
             (LocalContext.current.applicationContext as GeoApplication).repository,
@@ -93,14 +95,20 @@ fun BillsScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = com.geo.ledger.ui.theme.GeoSpacing.Page, vertical = 16.dp),
     ) {
         item {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.bills),
+                modifier=Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
+            androidx.compose.material3.IconButton(onClick=onOpenHistory) {
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.History,"修改与删除记录")
+            }
+            }
             Spacer(Modifier.height(16.dp))
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 modes.forEachIndexed { index, (mode, labelRes) ->
@@ -374,6 +382,7 @@ private fun BillsTransactionRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            com.geo.ledger.ui.attachments.TransactionAttachmentBadge(transaction.transactionUuid)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(

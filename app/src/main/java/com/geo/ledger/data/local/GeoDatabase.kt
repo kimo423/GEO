@@ -18,8 +18,9 @@ class GeoTypeConverters {
 }
 
 @Database(
-    entities = [TransactionEntity::class, PersonOptionEntity::class, ExpenseCategoryEntity::class],
-    version = 3,
+    entities = [TransactionEntity::class, PersonOptionEntity::class, ExpenseCategoryEntity::class,
+        AttachmentBlobEntity::class, TransactionAttachmentEntity::class, AuditEventEntity::class],
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(GeoTypeConverters::class)
@@ -27,6 +28,7 @@ abstract class GeoDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun personOptionDao(): PersonOptionDao
     abstract fun expenseCategoryDao(): ExpenseCategoryDao
+    abstract fun historyDao(): HistoryDao
 
     companion object {
         const val DATABASE_NAME = "geo-ledger.db"
@@ -50,6 +52,32 @@ abstract class GeoDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN transaction_uuid TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE transactions ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE transactions ADD COLUMN deleted_at_millis INTEGER")
+                db.query("SELECT id FROM transactions").use { cursor ->
+                    while (cursor.moveToNext()) {
+                        db.execSQL("UPDATE transactions SET transaction_uuid=? WHERE id=?",
+                            arrayOf(java.util.UUID.randomUUID().toString(), cursor.getLong(0)))
+                    }
+                }
+                db.query("SELECT COUNT(*),COUNT(DISTINCT transaction_uuid),SUM(CASE WHEN transaction_uuid='' THEN 1 ELSE 0 END) FROM transactions").use {
+                    check(it.moveToFirst() && it.getLong(0) == it.getLong(1) && it.getLong(2) == 0L) { "UUID migration validation failed" }
+                }
+                db.execSQL("CREATE UNIQUE INDEX index_transactions_transaction_uuid ON transactions(transaction_uuid)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS attachment_blobs (blobUuid TEXT NOT NULL PRIMARY KEY, sha256 TEXT NOT NULL, sizeBytes INTEGER NOT NULL, mimeType TEXT NOT NULL, internalStorageKey TEXT NOT NULL, createdAtMillis INTEGER NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX index_attachment_blobs_internalStorageKey ON attachment_blobs(internalStorageKey)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS transaction_attachments (attachmentUuid TEXT NOT NULL PRIMARY KEY, transactionUuid TEXT NOT NULL, blobUuid TEXT NOT NULL, originalFileName TEXT NOT NULL, sortOrder INTEGER NOT NULL, isActive INTEGER NOT NULL, createdAtMillis INTEGER NOT NULL, removedAtMillis INTEGER, FOREIGN KEY(transactionUuid) REFERENCES transactions(transaction_uuid) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(blobUuid) REFERENCES attachment_blobs(blobUuid) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX index_transaction_attachments_transactionUuid ON transaction_attachments(transactionUuid)")
+                db.execSQL("CREATE INDEX index_transaction_attachments_blobUuid ON transaction_attachments(blobUuid)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS audit_events (eventUuid TEXT NOT NULL PRIMARY KEY, transactionUuid TEXT NOT NULL, eventType TEXT NOT NULL, source TEXT NOT NULL, occurredAtMillis INTEGER NOT NULL, schemaVersion INTEGER NOT NULL, beforeSnapshotJson TEXT NOT NULL, afterSnapshotJson TEXT, FOREIGN KEY(transactionUuid) REFERENCES transactions(transaction_uuid) ON UPDATE NO ACTION ON DELETE RESTRICT)")
+                db.execSQL("CREATE INDEX index_audit_events_transactionUuid ON audit_events(transactionUuid)")
+                db.execSQL("CREATE INDEX index_audit_events_occurredAtMillis ON audit_events(occurredAtMillis)")
+            }
+        }
+
         fun getInstance(context: Context): GeoDatabase =
             instance ?: synchronized(this) {
                 instance ?: openFileDatabase(context.applicationContext, DATABASE_NAME)
@@ -62,7 +90,7 @@ abstract class GeoDatabase : RoomDatabase() {
                 // Version 1 is the baseline. Schema changes must add explicit migrations;
                 // destructive fallback is intentionally not enabled because this is ledger data.
                 .addCallback(DefaultCategoryCallback)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
 
         internal fun migrateOptionTable(db: SupportSQLiteDatabase, table: String) {
