@@ -267,6 +267,14 @@ private fun DetailRow(
     valueColor: Color = MaterialTheme.colorScheme.onBackground,
     prominent: Boolean = false,
 ) {
+    if (com.geo.ledger.ui.theme.isGraphite) {
+        if (prominent) com.geo.ledger.ui.theme.GraphiteHero(label, value, valueColor == GeoExpense)
+        else com.geo.ledger.ui.theme.GraphitePanel {
+            Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.titleMedium, color = valueColor)
+        }
+        return
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = label,

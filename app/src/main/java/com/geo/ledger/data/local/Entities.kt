@@ -53,6 +53,8 @@ data class TransactionEntity(
     val isDeleted: Boolean = false,
     @ColumnInfo(name = "deleted_at_millis")
     val deletedAtMillis: Long? = null,
+    @ColumnInfo(name = "expense_people_json")
+    val expensePeopleJson: String? = null,
 )
 
 @Entity(

@@ -40,7 +40,8 @@ class BackupAndPermissionManifestTest {
         assertTrue(source.contains("MIGRATION_1_2"))
         assertTrue(source.contains("MIGRATION_2_3"))
         assertTrue(source.contains("MIGRATION_3_4"))
-        assertTrue(source.contains("version = 4"))
+        assertTrue(source.contains("MIGRATION_4_5"))
+        assertTrue(source.contains("version = 5"))
     }
 
     private fun locate(relativePath: String): File {

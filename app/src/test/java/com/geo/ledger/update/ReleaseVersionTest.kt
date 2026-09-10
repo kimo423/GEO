@@ -4,6 +4,17 @@ import org.junit.Test
 import org.junit.Assert.*
 
 class ReleaseVersionTest {
+    @Test fun installedPreviewCanUpgradeToStableWithoutAcceptingRemotePrereleases() {
+        val stable = ReleaseVersion.parse("1.3.0")!!
+        assertTrue(stable.isNewerThanInstalled("1.3.0-preview"))
+        assertTrue(stable.isNewerThanInstalled("1.3.0-preview.1+build.7"))
+        assertFalse(ReleaseVersion.parse("1.2.0")!!.isNewerThanInstalled("1.3.0-preview"))
+        assertTrue(ReleaseVersion.parse("1.4.0")!!.isNewerThanInstalled("1.3.0-preview"))
+        assertFalse(stable.isNewerThanInstalled("1.3.0"))
+        assertTrue(stable.isNewerThanInstalled("1.2.0"))
+        assertNull(ReleaseVersion.parse("1.4.0-preview"))
+        assertThrows(IllegalArgumentException::class.java) { stable.isNewerThanInstalled("junk") }
+    }
     @Test fun parsesCapturedOfficialGithubResponse() {
         // Public, anonymous GET captured 2026-09-09; this test itself never networks.
         val json=java.io.File("../docs/upgrade-release-response.json").readText()

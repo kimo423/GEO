@@ -9,6 +9,15 @@ data class ReleaseVersion(val major: BigInteger, val minor: BigInteger, val patc
     override fun compareTo(other: ReleaseVersion): Int = compareValuesBy(this, other,
         ReleaseVersion::major, ReleaseVersion::minor, ReleaseVersion::patch)
     override fun toString(): String = "$major.$minor.$patch"
+    /** Only the installed app may be a preview; remote releases remain stable-only. */
+    fun isNewerThanInstalled(raw: String): Boolean {
+        parse(raw)?.let { return this > it }
+        require(raw.length <= 128) { "本地版本号格式无效" }
+        val preview = Regex("^(v?[0-9]+\\.[0-9]+\\.[0-9]+)-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$")
+            .matchEntire(raw.trim())
+        val core = requireNotNull(preview?.groupValues?.get(1)?.let(::parse)) { "本地版本号格式无效" }
+        return this >= core
+    }
     companion object {
         fun parse(raw: String): ReleaseVersion? {
             val match = Regex("^v?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$")

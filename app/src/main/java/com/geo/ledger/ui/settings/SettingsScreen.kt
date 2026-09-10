@@ -1,6 +1,9 @@
 package com.geo.ledger.ui.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,11 +69,13 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = com.geo.ledger.ui.theme.GeoSpacing.Page, vertical = com.geo.ledger.ui.theme.GeoSpacing.Section),
     ) {
-        Text(
+        if (com.geo.ledger.ui.theme.isGraphite) com.geo.ledger.ui.theme.GraphiteHeading("设置", "个性外观 / PREFERENCES") else Text(
             text = stringResource(R.string.settings),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
+        Spacer(Modifier.height(24.dp))
+        com.geo.ledger.ui.theme.SkinSelector()
         Spacer(Modifier.height(24.dp))
         Text(
             text = stringResource(R.string.ledger_settings),
@@ -83,7 +88,7 @@ fun SettingsScreen(
             subtitle = stringResource(R.string.manage_persons_subtitle),
             onClick = onOpenPersons,
         )
-        HorizontalDivider()
+        if (!com.geo.ledger.ui.theme.isGraphite) HorizontalDivider()
         SettingsEntry(
             title = stringResource(R.string.manage_categories),
             subtitle = stringResource(R.string.manage_categories_subtitle),
@@ -147,9 +152,10 @@ private fun SettingsEntry(
                 contentDescription = null,
             )
         },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+        colors = ListItemDefaults.colors(containerColor = if (com.geo.ledger.ui.theme.isGraphite) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.background),
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (com.geo.ledger.ui.theme.isGraphite) Modifier.padding(vertical = 4.dp).clip(RoundedCornerShape(18.dp)) else Modifier)
             .heightIn(min = 56.dp)
             .clickable(role = Role.Button, onClick = onClick),
     )

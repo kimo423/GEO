@@ -60,7 +60,7 @@ class UpgradeRepositoryTest {
         } finally { db.close() }
     }
     @Test fun migrationFromEveryOldVersionPreservesRowsAndBalances() = runBlocking {
-        for (version in 1..3) {
+        for (version in 1..4) {
             val name = "migration-${UUID.randomUUID()}.db"
             val schema = File("schemas/com.geo.ledger.data.local.GeoDatabase/$version.json")
             val root = JSONObject(schema.readText()).getJSONObject("database")
@@ -81,6 +81,7 @@ class UpgradeRepositoryTest {
                 for (i in 1..6) {
                     sql.execSQL("INSERT INTO transactions (id,type,amount_cents,transaction_date,created_at_millis,updated_at_millis,expense_person_id,expense_person_snapshot,expense_category_id,expense_category_snapshot,note) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                         arrayOf<Any>(i, if (i % 2 == 0) "EXPENSE" else "INCOME", i * 100L, 20000L, 100L, 100L, 1L, "张三", 1L, "耗材", "旧账$i"))
+                    if (version >= 4) sql.execSQL("UPDATE transactions SET transaction_uuid=? WHERE id=?", arrayOf<Any>(UUID.randomUUID().toString(), i))
                 }
                 sql.version = version
             }
@@ -92,7 +93,8 @@ class UpgradeRepositoryTest {
                 assertEquals(6, rows.map { it.transactionUuid }.distinct().size)
                 rows.forEach { AttachmentPolicy.uuid(it.transactionUuid); assertFalse(it.isDeleted); assertEquals("张三",it.expensePersonSnapshot); assertEquals(20000L,it.transactionDate) }
                 assertEquals(-300L, LedgerCalculator.withRunningBalances(rows).last().balanceAfterCents)
-                assertEquals(4, db.openHelper.readableDatabase.version)
+                assertEquals(5, db.openHelper.readableDatabase.version)
+                rows.forEach { assertEquals(listOf("张三"), it.selectedPeople().map { p -> p.name }) }
             } finally { db.close(); context.deleteDatabase(name) }
         }
     }

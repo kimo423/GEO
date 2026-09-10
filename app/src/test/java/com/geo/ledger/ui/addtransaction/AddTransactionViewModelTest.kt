@@ -28,6 +28,35 @@ import org.junit.Test
 class AddTransactionViewModelTest {
     private val dispatcher = UnconfinedTestDispatcher()
 
+    @Test fun multiSelectAllClearAndSavedStateRestoreHaveNoSelectionCountCap() = runTest(dispatcher) {
+        val options = MutableStateFlow((1L..256L).map { person(it, "人员$it") })
+        val handle = SavedStateHandle(mapOf("editor_amount" to "12.00", "editor_epoch_day" to LocalDate.now().toEpochDay()))
+        var saved: TransactionDraft? = null
+        fun create(state: SavedStateHandle) = AddTransactionViewModel(state, options, MutableStateFlow(emptyList()),
+            getTransaction = { null }, saveTransaction = { _, draft, _ -> saved = draft; 1L })
+        val vm = create(handle)
+        val job = launch { vm.uiState.collect {} }
+        vm.togglePerson(vm.uiState.value.personChips[0])
+        vm.togglePerson(vm.uiState.value.personChips[1])
+        assertEquals(2, vm.uiState.value.people.size)
+        vm.togglePerson(vm.uiState.value.personChips[0])
+        assertEquals(listOf(2L), vm.uiState.value.people.map { it.id })
+        vm.selectAllPersons()
+        assertEquals(256, vm.uiState.value.people.size)
+        assertTrue(vm.uiState.value.personChips.all { it.selected })
+        vm.selectAllPersons()
+        assertEquals(256, vm.uiState.value.people.size)
+        val restored = create(SavedStateHandle(handle.keys().associateWith { handle.get<Any>(it) }))
+        val restoredJob = launch { restored.uiState.collect {} }
+        assertEquals(vm.uiState.value.people, restored.uiState.value.people)
+        restored.save()
+        assertEquals(256, saved!!.expensePeople!!.size)
+        vm.clearPersons()
+        assertTrue(vm.uiState.value.people.isEmpty())
+        assertTrue(vm.uiState.value.personChips.none { it.selected })
+        job.cancel(); restoredJob.cancel()
+    }
+
     @Before
     fun setMainDispatcher() {
         Dispatchers.setMain(dispatcher)
@@ -68,7 +97,7 @@ class AddTransactionViewModelTest {
         viewModel.togglePerson(viewModel.uiState.value.personChips.first { !it.historical })
         assertFalse(viewModel.uiState.value.personChips.any { it.historical })
         assertTrue(viewModel.uiState.value.personChips.single { it.id == 7L }.selected)
-        viewModel.togglePerson(OptionChipModel(7L, "耗材", historical = true, selected = true))
+        viewModel.togglePerson(viewModel.uiState.value.personChips.single { it.id == 7L })
         assertEquals(null, viewModel.uiState.value.personId)
         job.cancel()
     }

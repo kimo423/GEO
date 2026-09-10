@@ -119,7 +119,7 @@ class SettingsToolsViewModel(application: Application): AndroidViewModel(applica
             catch(e: javax.net.ssl.SSLException) { throw IOException("无法建立安全连接，请检查网络和设备时间",e) }
             finally { connection.disconnect() }
         }
-        if(found.version>requireNotNull(ReleaseVersion.parse(BuildConfig.VERSION_NAME))) release.value=found
+        if(found.version.isNewerThanInstalled(BuildConfig.VERSION_NAME)) release.value=found
         else message.value="当前已是最新版本\nGEO ${BuildConfig.VERSION_NAME}"
     }
     override fun onCleared() {

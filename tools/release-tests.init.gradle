@@ -1,0 +1,7 @@
+// Compose host activities exist only in the debug ui-test-manifest dependency.
+// All repository, migration, archive and domain tests still run in Release.
+gradle.projectsEvaluated {
+    gradle.rootProject.project(':app').tasks.named('testReleaseUnitTest') {
+        exclude '**/SkinComposeTest.class', '**/UpgradeComposeSmokeTest.class'
+    }
+}

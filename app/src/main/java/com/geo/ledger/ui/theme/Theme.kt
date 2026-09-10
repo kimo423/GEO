@@ -5,6 +5,7 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
@@ -78,12 +79,24 @@ private val GeoTypography=Typography(
     bodySmall=TextStyle(fontSize=12.sp,lineHeight=19.sp),
 )
 
+private val GraphiteColors = GeoColors.copy(
+    primary = Color(0xFF252C35), onPrimary = Color.White,
+    background = Color(0xFFF0F2F5), surface = Color(0xFFF0F2F5),
+    surfaceContainerLowest = Color.White, surfaceContainerLow = Color(0xFFF8F9FB),
+    surfaceContainer = Color(0xFFE5E9EF), surfaceVariant = Color(0xFFE5E9EF),
+    primaryContainer = Color(0xFFDCE2EA), secondaryContainer = Color(0xFFDCE2EA),
+    outlineVariant = Color(0xFFDCE0E6), onSurfaceVariant = Color(0xFF606975),
+)
+
 @Composable
-fun GeoTheme(content: @Composable () -> Unit) {
+fun GeoTheme(skin: GeoSkin = GeoSkin.CLASSIC, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalGeoSkin provides skin) {
     MaterialTheme(
-        colorScheme = GeoColors,
+        colorScheme = if (skin == GeoSkin.CLASSIC) GeoColors else GraphiteColors,
         typography = GeoTypography,
-        shapes = GeoShapes,
+        shapes = if (skin == GeoSkin.CLASSIC) GeoShapes else Shapes(
+            small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(28.dp)),
         content = content,
     )
+    }
 }

@@ -64,9 +64,15 @@ class DataTransfer(private val repo: LedgerRepository) {
                 val categories=names(db.expenseCategoryDao().getAll().filter { it.isActive },{it.name},{it.id})
                 val mapped=targets.mapIndexed { index, snapshot ->
                     val tx=snapshot.transaction; val old=latest[tx.transactionUuid]
+                    val assignedIds = mutableSetOf<Long>()
+                    val mappedPeople = tx.expensePeopleJson?.let { tx.selectedPeople().map { person ->
+                        val id = persons[normalizedOptionName(person.name)]?.takeIf { assignedIds.add(it) }
+                        person.copy(id = id)
+                    } }
                     snapshot.copy(transaction=tx.copy(id=if(mode==ImportMode.FULL_REPLACE) index.toLong()+1 else old!!.id,
                         clientOpKey=if(mode==ImportMode.FULL_REPLACE) null else old?.clientOpKey,
                         expensePersonId=tx.expensePersonSnapshot?.let { persons[normalizedOptionName(it)] },
+                        expensePeopleJson=mappedPeople?.let(PersonSelections::encode),
                         expenseCategoryId=tx.expenseCategorySnapshot?.let { categories[normalizedOptionName(it)] }))
                 }
                 val candidate=if(mode==ImportMode.FULL_REPLACE) mapped.map { it.transaction }

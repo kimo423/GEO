@@ -1,4 +1,5 @@
 package com.geo.ledger.ui.home
+import com.geo.ledger.data.local.peopleLabel
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +59,11 @@ fun HomeScreen(
     val expenseFallback = stringResource(R.string.expense)
     val incomeFallback = stringResource(R.string.income)
     val snapshot = state.snapshot
+
+    if (com.geo.ledger.ui.theme.isGraphite) {
+        com.geo.ledger.ui.theme.GraphiteHome(state, onAddTransaction, onOpenDetail, onViewAll)
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -213,7 +219,7 @@ private fun RecentTransactionRow(
     )
     val subtitle = TransactionDisplay.subtitle(
         type = transaction.type,
-        personSnapshot = transaction.expensePersonSnapshot,
+        personSnapshot = transaction.peopleLabel(),
         categorySnapshot = transaction.expenseCategorySnapshot,
         note = transaction.note,
     )

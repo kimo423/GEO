@@ -94,7 +94,19 @@ class LedgerRepository(
         require(existing?.isDeleted != true) { "Transaction is deleted" }
 
         val now = nowMillis()
-        val personSnapshot = if (draft.type == TransactionType.EXPENSE) {
+        val people = if (draft.type != TransactionType.EXPENSE) null else draft.expensePeople?.let { requested ->
+            PersonSelections.validate(requested)
+            val previous = existing?.selectedPeople().orEmpty().toSet()
+            requested.map { person ->
+                if (person in previous) person
+                else {
+                    val option = requireNotNull(person.id?.let { personDao.getById(it) }) { "Person does not exist" }
+                    require(option.isActive) { "Person is inactive" }
+                    PersonSelection(option.id, option.name)
+                }
+            }
+        }
+        val personSnapshot = if (people != null) people.firstOrNull()?.name else if (draft.type == TransactionType.EXPENSE) {
             resolvePersonSnapshot(existing, draft.expensePersonId, draft.personSelectionEdited)
         } else {
             null
@@ -113,8 +125,10 @@ class LedgerRepository(
             transactionDate = draft.date.toEpochDay(),
             createdAtMillis = existing?.createdAtMillis ?: now,
             updatedAtMillis = now,
-            expensePersonId = if (draft.type == TransactionType.EXPENSE) draft.expensePersonId else null,
-            expensePersonSnapshot = personSnapshot,
+            expensePersonId = if (people != null) people.firstOrNull()?.id else if (draft.type == TransactionType.EXPENSE) draft.expensePersonId else null,
+            expensePersonSnapshot = if (people != null) people.firstOrNull()?.name else personSnapshot,
+            expensePeopleJson = if (people != null) PersonSelections.encode(people) else
+                existing?.expensePeopleJson?.takeIf { draft.type == TransactionType.EXPENSE && !draft.personSelectionEdited && draft.expensePersonId == existing.expensePersonId },
             expenseCategoryId = if (draft.type == TransactionType.EXPENSE) draft.expenseCategoryId else null,
             expenseCategorySnapshot = categorySnapshot,
             incomeSource = if (draft.type == TransactionType.INCOME) normalizedSource else null,

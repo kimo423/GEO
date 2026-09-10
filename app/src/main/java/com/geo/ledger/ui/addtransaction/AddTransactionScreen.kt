@@ -1,7 +1,14 @@
 package com.geo.ledger.ui.addtransaction
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -151,10 +158,12 @@ fun AddTransactionScreen(
                     )
                     if (uiState.type == TransactionType.EXPENSE) {
                         ChipSection(
-                            title = stringResource(R.string.person),
+                            title = "使用人（多选） · 已选 ${uiState.people.size} 人",
                             emptyText = stringResource(R.string.empty_persons),
                             chips = uiState.personChips,
                             onToggle = viewModel::togglePerson,
+                            onSelectAll = viewModel::selectAllPersons,
+                            onClear = viewModel::clearPersons,
                         )
                         ChipSection(
                             title = stringResource(R.string.category),
@@ -290,10 +299,19 @@ private fun AmountField(
     OutlinedTextField(
         value = amountRaw,
         onValueChange = onAmountChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().then(if (com.geo.ledger.ui.theme.isGraphite)
+            Modifier.clip(RoundedCornerShape(24.dp)).background(com.geo.ledger.ui.theme.GraphiteInk).padding(16.dp) else Modifier),
+        colors = if (com.geo.ledger.ui.theme.isGraphite) OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent,
+            focusedLabelColor = Color(0xFFCAD2DC), unfocusedLabelColor = Color(0xFFCAD2DC),
+            focusedPrefixColor = Color.White, unfocusedPrefixColor = Color.White,
+            focusedPlaceholderColor = Color(0xFFCAD2DC), unfocusedPlaceholderColor = Color(0xFFCAD2DC),
+            errorLabelColor = Color(0xFFFFB8AC), errorSupportingTextColor = Color(0xFFFFB8AC),
+            errorBorderColor = Color(0xFFFFB8AC), cursorColor = Color.White,
+        ) else OutlinedTextFieldDefaults.colors(),
         textStyle = MaterialTheme.typography.displaySmall.copy(
             fontWeight = FontWeight.SemiBold,
-            color = amountColor,
+            color = if (com.geo.ledger.ui.theme.isGraphite) Color.White else amountColor,
         ),
         label = {
             Text(
@@ -318,13 +336,23 @@ private fun ChipSection(
     emptyText: String,
     chips: List<com.geo.ledger.domain.OptionChipModel>,
     onToggle: (com.geo.ledger.domain.OptionChipModel) -> Unit,
+    onSelectAll: (() -> Unit)? = null,
+    onClear: (() -> Unit)? = null,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = if (com.geo.ledger.ui.theme.isGraphite) Modifier.fillMaxWidth()
+        .clip(RoundedCornerShape(20.dp)).background(Color.White).padding(16.dp) else Modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
         )
+        if (onSelectAll != null && onClear != null) {
+            androidx.compose.foundation.layout.Row {
+                TextButton(onClick = onSelectAll, enabled = chips.any { !it.historical && !it.selected }) { Text("全选使用人") }
+                TextButton(onClick = onClear, enabled = chips.any { it.selected }) { Text("清空使用人") }
+            }
+        }
         if (chips.isEmpty()) {
             Text(
                 text = emptyText,
@@ -341,6 +369,9 @@ private fun ChipSection(
                     FilterChip(
                         selected = chip.selected,
                         onClick = { onToggle(chip) },
+                        leadingIcon = if (onSelectAll != null && chip.selected) {
+                            { androidx.compose.material3.Icon(Icons.Default.Check, null, Modifier.size(16.dp)) }
+                        } else null,
                         modifier = Modifier.widthIn(max = 280.dp),
                         label = {
                             Text(

@@ -1,4 +1,5 @@
 package com.geo.ledger.ui.history
+import com.geo.ledger.data.local.peopleLabel
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -76,7 +77,7 @@ import java.time.format.DateTimeFormatter
             Text(MoneyFormatter.transaction(tx.type,tx.amountCents),style=MaterialTheme.typography.titleLarge,
                 color=if(tx.type==com.geo.ledger.data.local.TransactionType.INCOME) GeoIncome else GeoExpense)
             Text(GeoDates.formatRecordedAt(tx.transactionDate,tx.createdAtMillis),style=MaterialTheme.typography.bodySmall)
-            Text(listOfNotNull(tx.expensePersonSnapshot,tx.expenseCategorySnapshot,tx.incomeSource).joinToString(" · ").ifBlank { "未指定使用人、分类或来源" },style=MaterialTheme.typography.bodySmall)
+            Text(listOfNotNull(tx.peopleLabel(),tx.expenseCategorySnapshot,tx.incomeSource).joinToString(" · ").ifBlank { "未指定使用人、分类或来源" },style=MaterialTheme.typography.bodySmall)
             tx.note?.let { Text(it,style=MaterialTheme.typography.bodySmall,maxLines=if(expanded) Int.MAX_VALUE else 2) }
             if(tx.isDeleted) Text("已删除状态",color=GeoExpense)
             if(snapshot.attachments.isNotEmpty()) Text("附件 ${snapshot.attachments.size} 个",style=MaterialTheme.typography.labelSmall)

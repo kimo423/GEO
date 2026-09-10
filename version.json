@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "versionName": "1.2.0",
-  "releaseNotes": "新增每笔最多10个私有附件、修改/删除历史、配置与完整账本导入导出；保留旧账本并迁移数据库；统一界面与秒级24小时时间；更新检查改为设置页手动检查。127项自动化测试通过，按用户决定未做真机验收。请覆盖安装，不要卸载旧版或清除数据。",
-  "apkUrl": "https://github.com/kimo423/GEO/releases/latest/download/GEO.apk"
+  "versionCode": 9,
+  "versionName": "1.3.0",
+  "releaseNotes": "新增可切换的石墨银皮肤，经典界面默认保留；使用人支持多选、全选和清空，不设固定人数上限；完整保存多人名单、历史姓名和附件，兼容旧账单及旧备份。新版导出的账本备份需新版GEO读取。请先备份后覆盖安装，不要卸载旧版。未进行真机验收。",
+  "apkUrl": "https://github.com/kimo423/GEO/releases/download/v1.3.0/GEO.apk"
 }

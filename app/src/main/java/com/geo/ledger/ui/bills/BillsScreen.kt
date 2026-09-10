@@ -1,4 +1,5 @@
 package com.geo.ledger.ui.bills
+import com.geo.ledger.data.local.peopleLabel
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +84,7 @@ fun BillsScreen(
     ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val graphite = com.geo.ledger.ui.theme.isGraphite
     var showRangePicker by remember { mutableStateOf(false) }
     val expenseFallback = stringResource(R.string.expense)
     val incomeFallback = stringResource(R.string.income)
@@ -99,12 +101,16 @@ fun BillsScreen(
     ) {
         item {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+            if (graphite) {
+                com.geo.ledger.ui.theme.GraphiteHeading("账单", "收支明细 / LEDGER", Modifier.weight(1f))
+            } else {
             Text(
                 text = stringResource(R.string.bills),
                 modifier=Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
+            }
             androidx.compose.material3.IconButton(onClick=onOpenHistory) {
                 androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.History,"修改与删除记录")
             }
@@ -162,7 +168,8 @@ fun BillsScreen(
                     color = GeoExpense,
                 )
             } else {
-                PeriodSummarySection(summary = uiState.summary)
+                if (graphite) com.geo.ledger.ui.theme.GraphitePeriodSummary(uiState.summary)
+                else PeriodSummarySection(summary = uiState.summary)
             }
         }
         if (uiState.isReady && !uiState.ledgerError && !uiState.invalidCustomRange && uiState.groups.isEmpty()) {
@@ -188,7 +195,11 @@ fun BillsScreen(
                     items = group.entries,
                     key = { _, entry -> entry.transaction.id },
                 ) { index, entry ->
-                    Column {
+                    if (graphite) {
+                        Column(Modifier.padding(vertical = 5.dp)) {
+                            com.geo.ledger.ui.theme.GraphiteTransactionCard(entry) { onOpenDetail(entry.transaction.id) }
+                        }
+                    } else Column {
                         if (index > 0) HorizontalDivider()
                         BillsTransactionRow(
                             entry = entry,
@@ -522,7 +533,7 @@ private fun transactionFieldLine(transaction: TransactionEntity): String? {
     fun present(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
     val parts = when (transaction.type) {
         TransactionType.EXPENSE -> listOfNotNull(
-            present(transaction.expensePersonSnapshot),
+            present(transaction.peopleLabel()),
             present(transaction.expenseCategorySnapshot),
             present(transaction.note),
         )

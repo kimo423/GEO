@@ -2,6 +2,16 @@ package com.geo.ledger.ui.navigation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
@@ -220,6 +230,27 @@ private fun GeoBottomBar(
     currentRoute: String?,
     onNavigate: (String) -> Unit,
 ) {
+    if (com.geo.ledger.ui.theme.isGraphite) {
+        Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 10.dp)) {
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp))
+                .background(com.geo.ledger.ui.theme.GraphiteInk).padding(6.dp).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TopLevelDestinations.forEach { destination ->
+                    val selected = currentRoute == destination.route
+                    Column(Modifier.weight(1f).clip(RoundedCornerShape(21.dp))
+                        .background(if (selected) Color(0xFFE5EAF0) else Color.Transparent)
+                        .selectable(selected, role = Role.Tab, onClick = { onNavigate(destination.route) })
+                        .padding(vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val tint = if (selected) com.geo.ledger.ui.theme.GraphiteInk else Color(0xFFBEC6D1)
+                        Icon(if (selected) destination.selectedIcon else destination.unselectedIcon, null, tint = tint, modifier = Modifier.size(22.dp))
+                        Text(stringResource(destination.labelRes), style = MaterialTheme.typography.labelMedium, color = tint)
+                    }
+                }
+            }
+        }
+        return
+    }
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         TopLevelDestinations.forEach { destination ->
             val selected = currentRoute == destination.route

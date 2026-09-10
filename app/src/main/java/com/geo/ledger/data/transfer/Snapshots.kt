@@ -35,14 +35,16 @@ data class TransactionSnapshot(val transaction: TransactionEntity, val attachmen
         "isDeleted" to isDeleted, "deletedAtMillis" to deletedAtMillis,
         "expensePersonId" to expensePersonId, "expensePersonSnapshot" to expensePersonSnapshot,
         "expenseCategoryId" to expenseCategoryId, "expenseCategorySnapshot" to expenseCategorySnapshot,
-        "incomeSource" to incomeSource, "note" to note, "attachments" to attachments.map { it.json() }) }
+        "incomeSource" to incomeSource, "note" to note, "attachments" to attachments.map { it.json() }).also {
+            if (expensePeopleJson != null) it["expensePeople"] = selectedPeople().map { person -> person.json() }
+        } }
     fun encode(): String = StrictJson.stringify(json())
     fun business(): Map<String, Any?> = json().filterKeys {
-        it !in setOf("updatedAtMillis", "expensePersonId", "expenseCategoryId")
-    }
+        it !in setOf("updatedAtMillis", "expensePersonId", "expenseCategoryId", "expensePersonSnapshot", "expensePeople")
+    } + ("expensePeopleNames" to transaction.selectedPeople().map { it.name }.sorted())
     fun changes(after: TransactionSnapshot): List<String> {
         val labels = linkedMapOf("type" to "收支类型", "amountCents" to "金额", "transactionDate" to "日期",
-            "createdAtMillis" to "时间", "expensePersonSnapshot" to "使用人", "expenseCategorySnapshot" to "分类",
+            "createdAtMillis" to "时间", "expensePeopleNames" to "使用人", "expenseCategorySnapshot" to "分类",
             "incomeSource" to "来源", "note" to "备注", "attachments" to "附件", "isDeleted" to "删除状态")
         val b = business(); val a = after.business()
         return labels.filter { (key, _) -> b[key] != a[key] }.values.toList()
@@ -58,9 +60,14 @@ data class TransactionSnapshot(val transaction: TransactionEntity, val attachmen
         require(!transaction.isDeleted || attachments.isEmpty()) { "已删除账单不能有当前附件" }
         require((transaction.note?.length ?: 0) <= 1000 && (transaction.incomeSource?.length ?: 0) <= 120)
         require((transaction.expensePersonSnapshot?.length ?: 0) <= 40 && (transaction.expenseCategorySnapshot?.length ?: 0) <= 40)
+        transaction.expensePeopleJson?.let {
+            val people = transaction.selectedPeople()
+            PersonSelections.validate(people)
+            require(transaction.expensePersonId == people.firstOrNull()?.id && transaction.expensePersonSnapshot == people.firstOrNull()?.name) { "使用人快照不一致" }
+        }
         require(transaction.type != TransactionType.INCOME ||
             (transaction.expensePersonSnapshot == null && transaction.expenseCategorySnapshot == null &&
-                transaction.expensePersonId == null && transaction.expenseCategoryId == null))
+                transaction.expensePersonId == null && transaction.expenseCategoryId == null && transaction.selectedPeople().isEmpty()))
         require(transaction.type != TransactionType.EXPENSE || transaction.incomeSource == null)
         attachments.forEach { it.validate() }; AttachmentPolicy.validate(attachments.map { it.sizeBytes })
         require(attachments.map { it.attachmentUuid }.distinct().size == attachments.size) { "附件 UUID 重复" }
@@ -74,6 +81,7 @@ data class TransactionSnapshot(val transaction: TransactionEntity, val attachmen
                 type = TransactionType.valueOf(o.string("type")), amountCents = o.long("amountCents"),
                 transactionDate = o.long("transactionDate"), createdAtMillis = o.long("createdAtMillis"), updatedAtMillis = o.long("updatedAtMillis"),
                 expensePersonId = o.nullableLong("expensePersonId"), expensePersonSnapshot = o.nullableString("expensePersonSnapshot"),
+                expensePeopleJson = if (o.containsKey("expensePeople")) PersonSelections.encode(PersonSelections.parse(o["expensePeople"])) else null,
                 expenseCategoryId = o.nullableLong("expenseCategoryId"), expenseCategorySnapshot = o.nullableString("expenseCategorySnapshot"),
                 incomeSource = o.nullableString("incomeSource"), note = o.nullableString("note"),
                 transactionUuid = o.string("transactionUuid"), isDeleted = o.bool("isDeleted"), deletedAtMillis = o.nullableLong("deletedAtMillis")),

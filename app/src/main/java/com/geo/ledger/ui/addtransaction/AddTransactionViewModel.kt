@@ -9,6 +9,9 @@ import com.geo.ledger.data.local.ExpenseCategoryEntity
 import com.geo.ledger.data.local.PersonOptionEntity
 import com.geo.ledger.data.local.TransactionEntity
 import com.geo.ledger.data.local.TransactionType
+import com.geo.ledger.data.local.PersonSelection
+import com.geo.ledger.data.local.PersonSelections
+import com.geo.ledger.data.local.selectedPeople
 import com.geo.ledger.domain.OptionChipModel
 import com.geo.ledger.domain.OptionSnapshotPolicy
 import com.geo.ledger.domain.TransactionDraft
@@ -55,6 +58,7 @@ data class AddTransactionUiState(
     val sourceError: Boolean = false,
     val noteError: Boolean = false,
     val amountIssue: MoneyParser.DraftIssue = MoneyParser.DraftIssue.Empty,
+    val people: List<PersonSelection> = emptyList(),
 )
 
 sealed interface AddTransactionEvent {
@@ -161,18 +165,23 @@ class AddTransactionViewModel(
         initialValue = emptyList(),
     )
 
+    private val initialPeopleJson = savedStateHandle.get<String>(KEY_PEOPLE) ?: PersonSelections.encode(
+        savedStateHandle.get<String>(KEY_PERSON_SNAPSHOT)?.takeIf { it.isNotBlank() }?.let {
+            listOf(PersonSelection(savedStateHandle.get<Long>(KEY_PERSON_ID)?.takeIf { id -> id > 0 }, it))
+        }.orEmpty())
+
     val uiState: StateFlow<AddTransactionUiState> = combine(
         combine(
             savedStateHandle.getStateFlow(KEY_TYPE, TransactionType.EXPENSE.name),
             savedStateHandle.getStateFlow(KEY_AMOUNT, ""),
-            savedStateHandle.getStateFlow(KEY_PERSON_ID, NONE_ID),
+            savedStateHandle.getStateFlow(KEY_PEOPLE, initialPeopleJson),
             savedStateHandle.getStateFlow(KEY_CATEGORY_ID, NONE_ID),
             savedStateHandle.getStateFlow(KEY_SOURCE, ""),
-        ) { typeName, amountRaw, personId, categoryId, source ->
+        ) { typeName, amountRaw, peopleJson, categoryId, source ->
             FormFields(
                 type = runCatching { TransactionType.valueOf(typeName) }.getOrDefault(TransactionType.EXPENSE),
                 amountRaw = amountRaw,
-                personId = personId.takeIf { it > 0 },
+                people = PersonSelections.decode(peopleJson),
                 categoryId = categoryId.takeIf { it > 0 },
                 source = source,
             )
@@ -213,18 +222,14 @@ class AddTransactionViewModel(
             type = fields.type,
             amountRaw = fields.amountRaw,
             personId = fields.personId,
+            people = fields.people,
             categoryId = fields.categoryId,
             source = fields.source,
             epochDay = meta.epochDay,
             note = meta.note,
             persons = options.persons,
             categories = options.categories,
-            personChips = OptionSnapshotPolicy.chips(
-                active = options.persons.map { it.id to it.name },
-                selectedId = fields.personId,
-                historicalSnapshot = options.personSnapshot.ifBlank { null },
-                allowDetachedSnapshot = true,
-            ),
+            personChips = PersonSelections.chips(fields.people, options.persons),
             categoryChips = OptionSnapshotPolicy.chips(
                 active = options.categories.map { it.id to it.name },
                 selectedId = fields.categoryId,
@@ -291,13 +296,34 @@ class AddTransactionViewModel(
     }
 
     fun togglePerson(chip: OptionChipModel) {
-        toggleOption(
-            chip = chip,
-            idKey = KEY_PERSON_ID,
-            editedKey = KEY_PERSON_EDITED,
-            snapshotKey = KEY_PERSON_SNAPSHOT,
-            chips = { uiState.value.personChips },
-        )
+        if (_isSaving.value) return
+        val selected = currentPeople()
+        if (chip.historical) {
+            val old = selected.firstOrNull { it.name == chip.label && (it.id == chip.id || it.id == null && chip.id < 0) } ?: return
+            setPeople(selected - old)
+        } else {
+            val live = activePersons.value.firstOrNull { it.id == chip.id } ?: return
+            val option = PersonSelection(live.id, live.name)
+            setPeople(if (option in selected) selected - option else selected.filterNot { it.id == option.id } + option)
+        }
+    }
+
+    private fun currentPeople(): List<PersonSelection> = PersonSelections.decode(savedStateHandle.get<String>(KEY_PEOPLE) ?: initialPeopleJson)
+
+    private fun setPeople(people: List<PersonSelection>) {
+        savedStateHandle[KEY_PERSON_EDITED] = true
+        savedStateHandle[KEY_PEOPLE] = PersonSelections.encode(people)
+    }
+
+    fun selectAllPersons() {
+        if (_isSaving.value) return
+        val live = activePersons.value.map { PersonSelection(it.id, it.name) }
+        val ids = live.map { it.id }.toSet()
+        setPeople(currentPeople().filterNot { it.id in ids } + live)
+    }
+
+    fun clearPersons() {
+        if (!_isSaving.value) setPeople(emptyList())
     }
 
     fun toggleCategory(chip: OptionChipModel) {
@@ -369,6 +395,7 @@ class AddTransactionViewModel(
                         epochDay = latest.epochDay,
                         personSelectionEdited = savedStateHandle.get<Boolean>(KEY_PERSON_EDITED) == true,
                         categorySelectionEdited = savedStateHandle.get<Boolean>(KEY_CATEGORY_EDITED) == true,
+                        people = currentPeople(),
                     )
                     if (draft == null) {
                         _events.send(AddTransactionEvent.Failed(R.string.error_save_failed))
@@ -425,6 +452,7 @@ class AddTransactionViewModel(
                 savedStateHandle[KEY_PERSON_ID] = existing.expensePersonId ?: NONE_ID
                 savedStateHandle[KEY_CATEGORY_ID] = existing.expenseCategoryId ?: NONE_ID
                 savedStateHandle[KEY_PERSON_SNAPSHOT] = existing.expensePersonSnapshot.orEmpty()
+                savedStateHandle[KEY_PEOPLE] = PersonSelections.encode(existing.selectedPeople())
                 savedStateHandle[KEY_CATEGORY_SNAPSHOT] = existing.expenseCategorySnapshot.orEmpty()
                 savedStateHandle[KEY_SOURCE] = existing.incomeSource.orEmpty().take(LedgerRepository.MAX_SOURCE_LENGTH)
                 savedStateHandle[KEY_EPOCH_DAY] = existing.transactionDate
@@ -440,10 +468,10 @@ class AddTransactionViewModel(
     private data class FormFields(
         val type: TransactionType,
         val amountRaw: String,
-        val personId: Long?,
+        val people: List<PersonSelection>,
         val categoryId: Long?,
         val source: String,
-    )
+    ) { val personId: Long? get() = people.firstOrNull()?.id }
 
     private data class FormMeta(
         val epochDay: Long,
@@ -472,6 +500,7 @@ class AddTransactionViewModel(
         private const val KEY_TYPE = "editor_type"
         private const val KEY_AMOUNT = "editor_amount"
         private const val KEY_PERSON_ID = "editor_person_id"
+        internal const val KEY_PEOPLE = "editor_people_json"
         private const val KEY_CATEGORY_ID = "editor_category_id"
         private const val KEY_SOURCE = "editor_source"
         private const val KEY_EPOCH_DAY = "editor_epoch_day"

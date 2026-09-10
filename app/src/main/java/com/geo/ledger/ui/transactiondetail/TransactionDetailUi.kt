@@ -1,4 +1,5 @@
 package com.geo.ledger.ui.transactiondetail
+import com.geo.ledger.data.local.peopleLabel
 
 import com.geo.ledger.data.local.TransactionType
 import com.geo.ledger.domain.LedgerEntry
@@ -70,7 +71,7 @@ object TransactionDetailPresenter {
             amountCents = transaction.amountCents,
             epochDay = transaction.transactionDate,
             createdAtMillis = transaction.createdAtMillis,
-            personSnapshot = present(transaction.expensePersonSnapshot).takeIf { isExpense },
+            personSnapshot = present(transaction.peopleLabel()).takeIf { isExpense },
             categorySnapshot = present(transaction.expenseCategorySnapshot).takeIf { isExpense },
             incomeSource = present(transaction.incomeSource).takeUnless { isExpense },
             note = present(transaction.note),

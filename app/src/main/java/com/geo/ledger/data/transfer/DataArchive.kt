@@ -86,7 +86,7 @@ object DataArchive {
         val transactionsBytes = StrictJson.stringify(data.transactions.map { it.json() }).toByteArray(Charsets.UTF_8)
         val auditBytes = StrictJson.stringify(data.events.map { it.json() }).toByteArray(Charsets.UTF_8)
         require(transactionsBytes.size <= MAX_JSON && auditBytes.size <= MAX_JSON) { "备份 JSON 超过 32 MiB" }
-        val manifest = linkedMapOf("format" to "GEO_DATA","formatVersion" to 1,"exportedAt" to java.time.Instant.now().toString(),
+        val manifest = linkedMapOf("format" to "GEO_DATA","formatVersion" to 2,"exportedAt" to java.time.Instant.now().toString(),
             "appVersionName" to versionName,"appVersionCode" to versionCode,"transactionCount" to data.transactions.size,
             "auditEventCount" to data.events.size,"attachmentCount" to index.size,
             "transactionUuids" to data.transactions.map { it.transaction.transactionUuid },
@@ -180,7 +180,7 @@ object DataArchive {
                 fun decode(bytes: ByteArray): String = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                     .onUnmappableCharacter(CodingErrorAction.REPORT).decode(java.nio.ByteBuffer.wrap(bytes)).toString()
                 val manifest=StrictJson.parse(decode(bytes("manifest.json",MAX_JSON))).jsonObject()
-                require(manifest.string("format")=="GEO_DATA" && manifest.long("formatVersion")==1L) { "不支持的 GEO 数据格式" }
+                require(manifest.string("format")=="GEO_DATA" && manifest.long("formatVersion") in 1L..2L) { "不支持的 GEO 数据格式" }
                 val txBytes=bytes("transactions.json",MAX_JSON); val auditBytes=bytes("audit_logs.json",MAX_JSON)
                 require(hash(txBytes)==manifest.string("transactionsSha256") && hash(auditBytes)==manifest.string("auditLogsSha256")) { "账单或审计 JSON 校验失败" }
                 val txList=StrictJson.parse(decode(txBytes)) as? List<*> ?: error("账单 JSON 无效")

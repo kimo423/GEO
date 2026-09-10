@@ -15,6 +15,7 @@ data class TransactionDraft(
     val personSelectionEdited: Boolean = false,
     val categorySelectionEdited: Boolean = false,
     val attachments: List<com.geo.ledger.data.local.AttachmentRecord>? = null,
+    val expensePeople: List<com.geo.ledger.data.local.PersonSelection>? = null,
 )
 
 data class LedgerEntry(

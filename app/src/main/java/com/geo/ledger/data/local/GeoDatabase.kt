@@ -20,7 +20,7 @@ class GeoTypeConverters {
 @Database(
     entities = [TransactionEntity::class, PersonOptionEntity::class, ExpenseCategoryEntity::class,
         AttachmentBlobEntity::class, TransactionAttachmentEntity::class, AuditEventEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(GeoTypeConverters::class)
@@ -84,13 +84,20 @@ abstract class GeoDatabase : RoomDatabase() {
                     .also { instance = it }
             }
 
+        val MIGRATION_4_5: Migration = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // NULL means legacy single-person data. Keep every original snapshot intact.
+                db.execSQL("ALTER TABLE transactions ADD COLUMN expense_people_json TEXT")
+            }
+        }
+
         /** Same callback + migrations as production; used by tests with a dedicated file name. */
         fun openFileDatabase(context: Context, name: String): GeoDatabase =
             Room.databaseBuilder(context.applicationContext, GeoDatabase::class.java, name)
                 // Version 1 is the baseline. Schema changes must add explicit migrations;
                 // destructive fallback is intentionally not enabled because this is ledger data.
                 .addCallback(DefaultCategoryCallback)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
 
         internal fun migrateOptionTable(db: SupportSQLiteDatabase, table: String) {

@@ -42,6 +42,7 @@ object AddTransactionValidator {
         epochDay: Long,
         personSelectionEdited: Boolean = false,
         categorySelectionEdited: Boolean = false,
+        people: List<com.geo.ledger.data.local.PersonSelection>? = null,
     ): TransactionDraft? {
         if (!canSave(type, amountRaw, source, note, epochDay)) return null
         val amountCents = parsedAmountCents(amountRaw) ?: return null
@@ -57,6 +58,7 @@ object AddTransactionValidator {
                 incomeSource = null,
                 note = normalizedNote,
                 personSelectionEdited = personSelectionEdited,
+                expensePeople = people,
                 categorySelectionEdited = categorySelectionEdited,
             )
             TransactionType.INCOME -> TransactionDraft(
